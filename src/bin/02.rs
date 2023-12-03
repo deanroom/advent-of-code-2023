@@ -102,6 +102,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                     game.tries.push(game_try);
                 })
                 .collect();
+
             if game.tries.iter().any(|game_try| {
                 game_try.red > beg.red || game_try.green > beg.green || game_try.blue > beg.blue
             }) {
