@@ -21,22 +21,26 @@ pub fn part_one(input: &str) -> Option<u32> {
             let mut index = 0;
             let mut it = line.chars();
             while let Some(mut c) = it.next() {
+                let mut number = Number::default();
                 if c.is_numeric() {
-                    let mut number = Number::default();
                     number.start = index;
+                    // new add line.
+                    number.end = index;
                     number.value = c.to_digit(10).expect("Char must be number.");
                     loop {
                         match it.next() {
                             Some(char) => {
                                 if !char.is_numeric() {
+                                    //TODO make mistake to add number here.
                                     number.end = index;
-                                    data.numbers.push(number);
                                     c = char;
                                     index += 1;
                                     break;
                                 }
                                 number.value = number.value * 10
                                     + char.to_digit(10).expect("Char must be number.");
+                                    // make mistake to calculate wrong end index.
+                                number.end = index;
                                 index += 1;
                             }
                             None => {
@@ -45,6 +49,10 @@ pub fn part_one(input: &str) -> Option<u32> {
                             }
                         }
                     }
+                }
+                if number.value > 0 {
+                    // make mistake before to push number too late.
+                    data.numbers.push(number);
                 }
 
                 if c == '.' {
