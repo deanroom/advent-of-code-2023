@@ -1,4 +1,4 @@
-use std::{fmt::Display, process::id};
+
 
 advent_of_code::solution!(2);
 
@@ -94,7 +94,7 @@ fn process_line(line: &str) -> Game {
     game
 }
 pub fn part_two(input: &str) -> Option<u32> {
-    let beg = Round {
+    let _beg = Round {
         red: 12,
         green: 13,
         blue: 14,

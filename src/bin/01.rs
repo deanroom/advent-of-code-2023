@@ -43,7 +43,7 @@ pub fn part_two(input: &str) -> Option<u32> {
                 result.to_digit(10)
             });
 
-            let first = numbers.next().unwrap();
+            let first: u32 = numbers.next().unwrap();
             match numbers.last() {
                 Some(num) => first * 10 + num,
                 None => first * 10 + first,
