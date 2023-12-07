@@ -2,15 +2,15 @@ advent_of_code::solution!(3);
 
 #[derive(Default)]
 struct Number {
-    start: u32,
-    end: u32,
+    start: i32,
+    end: i32,
     value: u32,
 }
 
 #[derive(Default)]
 struct LineData {
     numbers: Vec<Number>,
-    symbols: Vec<u32>,
+    symbols: Vec<i32>,
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -39,7 +39,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                                 }
                                 number.value = number.value * 10
                                     + char.to_digit(10).expect("Char must be number.");
-                                    // make mistake to calculate wrong end index.
+                                // make mistake to calculate wrong end index.
                                 number.end = index;
                                 index += 1;
                             }
@@ -111,13 +111,98 @@ pub fn part_one(input: &str) -> Option<u32> {
                 continue;
             }
         }
-        println!("{:?}", line_numbers);
+        // println!("{:?}", line_numbers);
     }
     Some(valid_numbers.iter().sum())
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u32> {
+    let line_data: Vec<LineData> = input
+        .lines()
+        .map(|line| {
+            let mut data: LineData = LineData::default();
+            let mut index = 0;
+            let mut it = line.chars();
+            while let Some(mut c) = it.next() {
+                let mut number = Number::default();
+                if c.is_numeric() {
+                    number.start = index;
+                    number.end = index;
+                    number.value = c.to_digit(10).expect("Char must be number.");
+                    loop {
+                        match it.next() {
+                            Some(char) => {
+                                if !char.is_numeric() {
+                                    number.end = index;
+                                    c = char;
+                                    index += 1;
+                                    break;
+                                }
+                                number.value = number.value * 10
+                                    + char.to_digit(10).expect("Char must be number.");
+                                number.end = index;
+                                index += 1;
+                            }
+                            None => {
+                                index += 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if number.value > 0 {
+                    data.numbers.push(number);
+                }
+
+                if c == '*' {
+                    data.symbols.push(index);
+                }
+                index += 1;
+            }
+            data
+        })
+        .collect();
+
+    let mut valid_numbers: Vec<u32> = vec![];
+
+    for (index, data) in line_data.iter().enumerate() {
+        if index == 0 || index == line_data.len() - 1 {
+            continue;
+        }
+
+        let mut line_numbers: Vec<u32> = vec![];
+        let next_line = &line_data[index + 1];
+        let preview_line = &line_data[index - 1];
+
+        for symbol in data.symbols.iter() {
+            let mut numbers: Vec<u32> = vec![];
+            for number in data.numbers.iter() {
+                if number.start - 1 == *symbol || number.end + 1 == *symbol {
+                    numbers.push(number.value);
+                    line_numbers.push(number.value);
+                }
+            }
+
+            for number in preview_line.numbers.iter() {
+                if number.start - 1 <= *symbol && number.end + 1 >= *symbol {
+                    numbers.push(number.value);
+                    line_numbers.push(number.value);
+                }
+            }
+
+            for number in next_line.numbers.iter() {
+                if number.start - 1 <= *symbol && number.end + 1 >= *symbol {
+                    numbers.push(number.value);
+                    line_numbers.push(number.value);
+                }
+            }
+            if numbers.len() == 2 {
+                valid_numbers.push(numbers.first().unwrap() * numbers.last().unwrap());
+            }
+        }
+    }
+    Some(valid_numbers.iter().sum())
 }
 
 #[cfg(test)]
@@ -133,6 +218,11 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(467835));
+    }
+    #[test]
+    fn test_part_two_2() {
+        let result = part_two(&advent_of_code::template::read_file("examples", DAY));
+        assert_eq!(result, Some(467835));
     }
 }
