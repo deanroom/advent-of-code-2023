@@ -1,5 +1,3 @@
-
-
 advent_of_code::solution!(2);
 
 #[derive(Debug, Default)]
@@ -51,14 +49,16 @@ pub fn part_one(input: &str) -> Option<u32> {
 fn process_line(line: &str) -> Game {
     let mut token: Vec<&str> = line.split(&[':', ';']).collect();
     let mut it = token.iter_mut();
-    let mut game = Game::default();
-    game.id = it
-        .next()
-        .expect("There must game segment")
-        .replace("Game", "")
-        .trim()
-        .parse()
-        .expect("It must be game id.");
+    let mut game = Game {
+        id: it
+            .next()
+            .expect("There must game segment")
+            .replace("Game", "")
+            .trim()
+            .parse()
+            .expect("It must be game id."),
+        round: vec![],
+    };
 
     game.round = it
         .map(|strgame| {
