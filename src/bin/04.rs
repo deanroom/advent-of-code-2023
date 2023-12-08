@@ -58,8 +58,6 @@ fn process_win(game_numbers: &[u32], winning_numbers: &[u32]) -> u32 {
 #[derive(Debug, Default)]
 struct Card {
     id: u32,
-    winning_numbers: Vec<u32>,
-    game_numbers: Vec<u32>,
     win: u32,
 }
 #[derive(Debug, Default)]
@@ -85,9 +83,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 
         let card = Card {
             id: (index as u32) + 1,
-            win: process(&game_numbers, &winning_numbers),
-            winning_numbers: winning_numbers,
-            game_numbers: game_numbers,
+            win: process_win(&game_numbers, &winning_numbers),
         };
         original_cards.push(card);
     }
@@ -108,9 +104,13 @@ pub fn part_two(input: &str) -> Option<u32> {
 }
 
 fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
+    if root.win == 0 {
+        return;
+    }
+
     let mut copied_index = root.id + root.win;
-    if copied_index >= origin_cards.len() as u32 {
-        copied_index = (origin_cards.len() - 1) as u32;
+    if copied_index > origin_cards.len() as u32 {
+        copied_index = origin_cards.len() as u32;
     }
 
     if copied_index <= root.id {
@@ -122,10 +122,7 @@ fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
         let mut child = CardNew::default();
         child.id = copied_card.id;
         child.win = copied_card.win;
-        if child.win > 0 {
-            println!("{:?}", copied_card);
-            scratch(&mut child, &origin_cards)
-        }
+        scratch(&mut child, &origin_cards);
         root.children.push(child);
     }
 }
