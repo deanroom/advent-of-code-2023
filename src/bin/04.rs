@@ -92,9 +92,11 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     let output = it
         .map(|node| {
-            let mut root = CardNew::default();
-            root.id = node.id;
-            root.win = node.win;
+            let mut root: CardNew = CardNew {
+                id: node.id,
+                win: node.win,
+                ..Default::default()
+            };
             scratch(&mut root, &original_cards);
             count_number(&root)
         })
@@ -103,14 +105,14 @@ pub fn part_two(input: &str) -> Option<u32> {
     Some(output)
 }
 
-fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
+fn scratch(root: &mut CardNew, origin_cards: &Vec<Card>) {
     if root.win == 0 {
         return;
     }
 
     let mut copied_index = root.id + root.win;
-    if copied_index > origin_cards.len() as u32 {
-        copied_index = origin_cards.len() as u32;
+    if copied_index >= origin_cards.len() as u32 {
+        copied_index = (origin_cards.len()) as u32;
     }
 
     if copied_index <= root.id {
@@ -119,10 +121,13 @@ fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
 
     for index in root.id..copied_index {
         let copied_card = origin_cards.get(index as usize).unwrap();
-        let mut child = CardNew::default();
-        child.id = copied_card.id;
-        child.win = copied_card.win;
-        scratch(&mut child, &origin_cards);
+        let mut child = CardNew {
+            id: copied_card.id,
+            win: copied_card.win,
+            ..Default::default()
+        };
+
+        scratch(&mut child, origin_cards);
         root.children.push(child);
     }
 }
