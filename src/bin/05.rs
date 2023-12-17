@@ -1,8 +1,8 @@
 advent_of_code::solution!(5);
 
 use lazy_static::lazy_static;
+use std::ops::Range;
 use std::sync::Mutex;
-use std::{ops::Range};
 
 use nom::{
     bytes::complete::take_until,
