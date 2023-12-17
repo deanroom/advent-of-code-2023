@@ -1,6 +1,8 @@
 advent_of_code::solution!(5);
 
-use std::ops::Range;
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+use std::{ops::Range, time::Instant};
 
 use nom::{
     bytes::complete::take_until,
@@ -11,7 +13,6 @@ use nom::{
 };
 use nom_supreme::{tag::complete::tag, ParserExt};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-
 
 #[derive(Debug)]
 struct SeedMap {
@@ -86,18 +87,42 @@ pub fn part_one(input: &str) -> Option<u64> {
     Some(*locations.iter().min().expect("Should be number."))
 }
 
+lazy_static! {
+    static ref GLOBAL_COUNTER: Mutex<u32> = Mutex::new(0);
+}
+static mut total_count: usize = 0;
+fn increment_global_counter() {
+    let mut counter = GLOBAL_COUNTER.lock().unwrap();
+    *counter += 1;
+}
+
+fn get_global_counter() -> u32 {
+    let counter = GLOBAL_COUNTER.lock().unwrap();
+    *counter
+}
+
+pub fn progress() {
+    increment_global_counter();
+    unsafe {
+        println!(
+            "{}/{}=={}%",
+            get_global_counter(),
+            total_count,
+            get_global_counter() / (total_count as u32) * 100
+        );
+    }
+}
+
 pub fn part_two(input: &str) -> Option<u64> {
     let (_, (seeds, maps)) = parse_seedmaps2(input).expect("a valid parse");
+    unsafe { total_count = seeds.iter().flat_map(|range| range.clone()).count() };
 
     let locations = seeds
-    .into_par_iter()
-    // .progress_count(count)
-    .flat_map(|range| range.clone())
-    .map(|seed| {
-        maps.iter()
-            .fold(seed, |seed, map| map.translate(seed))
-    })
-    .min();
+        .into_par_iter()
+        //  .progress_count(count)
+        .flat_map(|range| range.clone())
+        .map(|seed| maps.iter().fold(seed, |seed, map| map.translate(seed)))
+        .min();
     Some(*locations.iter().min().expect("Should be number."))
 }
 
