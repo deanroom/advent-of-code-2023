@@ -58,8 +58,6 @@ fn process_win(game_numbers: &[u32], winning_numbers: &[u32]) -> u32 {
 #[derive(Debug, Default)]
 struct Card {
     id: u32,
-    winning_numbers: Vec<u32>,
-    game_numbers: Vec<u32>,
     win: u32,
 }
 #[derive(Debug, Default)]
@@ -85,22 +83,21 @@ pub fn part_two(input: &str) -> Option<u32> {
 
         let card = Card {
             id: (index as u32) + 1,
-            win: process(&game_numbers, &winning_numbers),
-            winning_numbers: winning_numbers,
-            game_numbers: game_numbers,
+            win: process_win(&game_numbers, &winning_numbers),
         };
         original_cards.push(card);
     }
-
-    let mut root = CardNew::default();
+    // println!("{:?}", original_cards);
     let mut it = original_cards.iter();
-    let first = it.next().unwrap();
-    root.id = first.id;
-    root.win = first.win;
-    scratch(&mut root, &original_cards);
-    let number = count_number(&root, 1);
-    println!("{:?}", root);
-
+    let mut number = 0;
+    for node in it {
+        let mut root = CardNew::default();
+        root.id = node.id;
+        root.win = node.win;
+        scratch(&mut root, &original_cards);
+        number = number + count_number(&root);
+    }
+    // println!("{:?}", root);
     Some(number)
 }
 
@@ -125,10 +122,10 @@ fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
         root.children.push(child);
     }
 }
-fn count_number(root: &CardNew, mut count: u32)-> u32{
-    println!(",{:?}",root);
+fn count_number(root: &CardNew) -> u32 {
+    let mut count = 1;
     for node in root.children.iter() {
-       count_number(node, count);
+        count = count + count_number(node);
     }
     count
 }
@@ -150,41 +147,34 @@ mod tests {
 
     #[test]
     fn test_part_two_count_number() {
-        let result = count_number(
-            &CardNew {
-                id: 1,
-                win: 8,
-                children: vec![
-                    CardNew {
-                        id: 2,
-                        win: 2,
-                        children: vec![
-                            CardNew {
-                                id: 3,
-                                win: 2,
-                                children: vec![
-                                    CardNew {
-                                        id: 4,
-                                        win: 1,
-                                        children: vec![CardNew {
-                                            id: 5,
-                                            win: 0,
-                                            children: vec![],
-                                        }],
-                                    },
-                                    CardNew {
-                                        id: 5,
-                                        win: 0,
-                                        children: vec![],
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-            1,
-        );
+        let result = count_number(&CardNew {
+            id: 1,
+            win: 8,
+            children: vec![CardNew {
+                id: 2,
+                win: 2,
+                children: vec![CardNew {
+                    id: 3,
+                    win: 2,
+                    children: vec![
+                        CardNew {
+                            id: 4,
+                            win: 1,
+                            children: vec![CardNew {
+                                id: 5,
+                                win: 0,
+                                children: vec![],
+                            }],
+                        },
+                        CardNew {
+                            id: 5,
+                            win: 0,
+                            children: vec![],
+                        },
+                    ],
+                }],
+            }],
+        });
         assert_eq!(result, 6);
     }
 }
