@@ -88,7 +88,7 @@ pub fn part_two(input: &str) -> Option<u32> {
         original_cards.push(card);
     }
     // println!("{:?}", original_cards);
-    let mut it = original_cards.iter();
+    let it = original_cards.iter();
     let mut number = 0;
     for node in it {
         let mut root = CardNew::default();
