@@ -95,7 +95,7 @@ pub fn part_two(input: &str) -> Option<u32> {
         root.id = node.id;
         root.win = node.win;
         scratch(&mut root, &original_cards);
-        number = number + count_number(&root);
+        number += count_number(&root);
     }
     // println!("{:?}", root);
     Some(number)
@@ -117,7 +117,7 @@ fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
         child.id = copied_card.id;
         child.win = copied_card.win;
         if child.win > 0 {
-            scratch(&mut child, &origin_cards)
+            scratch(&mut child, origin_cards)
         }
         root.children.push(child);
     }
@@ -125,7 +125,7 @@ fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
 fn count_number(root: &CardNew) -> u32 {
     let mut count = 1;
     for node in root.children.iter() {
-        count = count + count_number(node);
+        count += count_number(node);
     }
     count
 }
