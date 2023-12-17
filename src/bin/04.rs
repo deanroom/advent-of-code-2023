@@ -58,6 +58,8 @@ fn process_win(game_numbers: &[u32], winning_numbers: &[u32]) -> u32 {
 #[derive(Debug, Default)]
 struct Card {
     id: u32,
+    winning_numbers: Vec<u32>,
+    game_numbers: Vec<u32>,
     win: u32,
 }
 #[derive(Debug, Default)]
@@ -83,36 +85,29 @@ pub fn part_two(input: &str) -> Option<u32> {
 
         let card = Card {
             id: (index as u32) + 1,
-            win: process_win(&game_numbers, &winning_numbers),
+            win: process(&game_numbers, &winning_numbers),
+            winning_numbers: winning_numbers,
+            game_numbers: game_numbers,
         };
         original_cards.push(card);
     }
 
-    let it = original_cards.iter();
+    let mut root = CardNew::default();
+    let mut it = original_cards.iter();
+    let first = it.next().unwrap();
+    root.id = first.id;
+    root.win = first.win;
+    scratch(&mut root, &original_cards);
+    let number = count_number(&root, 1);
+    println!("{:?}", root);
 
-    let output = it
-        .map(|node| {
-            let mut root: CardNew = CardNew {
-                id: node.id,
-                win: node.win,
-                ..Default::default()
-            };
-            scratch(&mut root, &original_cards);
-            count_number(&root)
-        })
-        .sum();
-
-    Some(output)
+    Some(number)
 }
 
-fn scratch(root: &mut CardNew, origin_cards: &Vec<Card>) {
-    if root.win == 0 {
-        return;
-    }
-
+fn scratch<'a>(root: &mut CardNew, origin_cards: &Vec<Card>) {
     let mut copied_index = root.id + root.win;
     if copied_index >= origin_cards.len() as u32 {
-        copied_index = (origin_cards.len()) as u32;
+        copied_index = (origin_cards.len() - 1) as u32;
     }
 
     if copied_index <= root.id {
@@ -121,20 +116,19 @@ fn scratch(root: &mut CardNew, origin_cards: &Vec<Card>) {
 
     for index in root.id..copied_index {
         let copied_card = origin_cards.get(index as usize).unwrap();
-        let mut child = CardNew {
-            id: copied_card.id,
-            win: copied_card.win,
-            ..Default::default()
-        };
-
-        scratch(&mut child, origin_cards);
+        let mut child = CardNew::default();
+        child.id = copied_card.id;
+        child.win = copied_card.win;
+        if child.win > 0 {
+            scratch(&mut child, &origin_cards)
+        }
         root.children.push(child);
     }
 }
-fn count_number(root: &CardNew) -> u32 {
-    let mut count = 1;
+fn count_number(root: &CardNew, mut count: u32)-> u32{
+    println!(",{:?}",root);
     for node in root.children.iter() {
-        count += count_number(node);
+       count_number(node, count);
     }
     count
 }
@@ -156,34 +150,41 @@ mod tests {
 
     #[test]
     fn test_part_two_count_number() {
-        let result = count_number(&CardNew {
-            id: 1,
-            win: 8,
-            children: vec![CardNew {
-                id: 2,
-                win: 2,
-                children: vec![CardNew {
-                    id: 3,
-                    win: 2,
-                    children: vec![
-                        CardNew {
-                            id: 4,
-                            win: 1,
-                            children: vec![CardNew {
-                                id: 5,
-                                win: 0,
-                                children: vec![],
-                            }],
-                        },
-                        CardNew {
-                            id: 5,
-                            win: 0,
-                            children: vec![],
-                        },
-                    ],
-                }],
-            }],
-        });
+        let result = count_number(
+            &CardNew {
+                id: 1,
+                win: 8,
+                children: vec![
+                    CardNew {
+                        id: 2,
+                        win: 2,
+                        children: vec![
+                            CardNew {
+                                id: 3,
+                                win: 2,
+                                children: vec![
+                                    CardNew {
+                                        id: 4,
+                                        win: 1,
+                                        children: vec![CardNew {
+                                            id: 5,
+                                            win: 0,
+                                            children: vec![],
+                                        }],
+                                    },
+                                    CardNew {
+                                        id: 5,
+                                        win: 0,
+                                        children: vec![],
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                ],
+            },
+            1,
+        );
         assert_eq!(result, 6);
     }
 }
