@@ -12,7 +12,6 @@ use nom::{
     IResult, Parser,
 };
 use nom_supreme::{tag::complete::tag, ParserExt};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Debug)]
 struct SeedMap {
@@ -117,8 +116,7 @@ pub fn part_two(input: &str) -> Option<u64> {
     unsafe { TOTAL_COUNT = seeds.iter().flat_map(|range| range.clone()).count() };
 
     let locations = seeds
-        .into_par_iter()
-        //  .progress_count(count)
+        .into_iter()
         .flat_map(|range| range.clone())
         .map(|seed| maps.iter().fold(seed, |seed, map| map.translate(seed)))
         .min();
