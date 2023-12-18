@@ -15,13 +15,13 @@ struct Race {
 
 impl Race {
     fn get_wins(&self) -> u32 {
-        let mut wins: Vec<u32> = vec![];
+        let mut sum = 0;
         for hold in 1..self.time {
             if (self.time - hold) * hold > self.distance {
-                wins.push(hold);
+                sum += 1;
             }
         }
-        wins.len() as u32
+        sum
     }
 }
 
@@ -47,15 +47,15 @@ pub fn part_two(input: &str) -> Option<u32> {
         .parse()
         .expect("A number.");
 
-    let mut wins: Vec<u32> = vec![];
+    let mut sum = 0;
     for hold in 1..time {
         if (time - hold) * hold > distance {
-            wins.push(hold);
+            sum += 1;
         }
     }
-    let sum = wins.len() as u32;
     Some(sum)
 }
+
 fn parse(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
     let (input, time) = tag("Time:")
         .precedes(multispace1)
@@ -95,13 +95,7 @@ mod tests {
         assert_eq!(time, vec![7, 15, 30]);
         assert_eq!(distance, vec![9, 40, 200]);
     }
-    #[test]
-    fn test_parse_two() {
-        let input = &advent_of_code::template::read_file("examples", DAY);
-        let (_input, (time, distance)) = parse(input).expect("A valid parse");
-        assert_eq!(time, vec![7, 15, 30]);
-        assert_eq!(distance, vec![9, 40, 200]);
-    }
+
     #[test]
     fn test_part_one() {
         let result = part_one(&advent_of_code::template::read_file("examples", DAY));
