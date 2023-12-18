@@ -32,28 +32,28 @@ pub fn part_one(input: &str) -> Option<u32> {
     Some(sum)
 }
 
-pub fn part_two(input: &str) -> Option<u64> {
+pub fn part_two(input: &str) -> Option<u32> {
     let (_, races) = parse(input).expect("A valid parse");
     let races = gen_races(races);
-    let time: u64 = races
+    let time: u32 = races
         .iter()
         .fold(String::new(), |acc, x| acc + &x.time.to_string())
         .parse()
         .expect("A number.");
 
-    let distance: u64 = races
+    let distance = races
         .iter()
-        .fold(String::new(), |acc, x| acc + &x.distance.to_string())
+        .fold(String::new(), |acc, x| acc + &x.time.to_string())
         .parse()
         .expect("A number.");
 
-    let mut wins: Vec<u64> = vec![];
+    let mut wins: Vec<u32> = vec![];
     for hold in 1..time {
         if (time - hold) * hold > distance {
             wins.push(hold);
         }
     }
-    let sum = wins.len() as u64;
+    let sum = wins.len() as u32;
     Some(sum)
 }
 fn parse(input: &str) -> IResult<&str, (Vec<u32>, Vec<u32>)> {
