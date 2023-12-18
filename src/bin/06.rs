@@ -1,8 +1,8 @@
 advent_of_code::solution!(6);
 
 use nom::{
-    character::complete::{self, multispace0, multispace1, newline, space1},
-    multi::{many1, separated_list1},
+    character::complete::{self, multispace1, newline, space1},
+    multi::{separated_list1},
     IResult, Parser,
 };
 use nom_supreme::{tag::complete::tag, ParserExt};
