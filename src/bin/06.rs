@@ -43,7 +43,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     let distance = races
         .iter()
-        .fold(String::new(), |acc, x| acc + &x.time.to_string())
+        .fold(String::new(), |acc, x| acc + &x.distance.to_string())
         .parse()
         .expect("A number.");
 
