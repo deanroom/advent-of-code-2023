@@ -1,15 +1,12 @@
 advent_of_code::solution!(6);
 
-use std::slice::Windows;
+
 
 use nom::{
-    bytes::complete::{take_till, take_until},
     character::{
         complete::{self, multispace1, newline, space1},
-        is_digit,
     },
-    multi::{many1, separated_list1},
-    sequence::{preceded, separated_pair, tuple},
+    multi::{separated_list1},
     IResult, Parser,
 };
 use nom_supreme::{tag::complete::tag, ParserExt};
@@ -39,7 +36,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     Some(sum)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(_input: &str) -> Option<u32> {
     None
 }
 fn parse<'a>(input: &'a str) -> IResult<&'a str, (Vec<u32>, Vec<u32>)> {
@@ -79,7 +76,7 @@ mod tests {
     #[test]
     fn test_parse() {
         let input = &advent_of_code::template::read_file("examples", DAY);
-        let (input, (time, distance)) = parse(input).expect("A valid parse");
+        let (_input, (time, distance)) = parse(input).expect("A valid parse");
         assert_eq!(time, vec![7, 15, 30]);
         assert_eq!(distance, vec![9, 40, 200]);
     }
