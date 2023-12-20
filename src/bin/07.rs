@@ -145,12 +145,10 @@ impl CamelCard {
                     } else {
                         Rank::FullHouse
                     }
+                } else if self.hand.contains(joker) {
+                    Rank::FourOfAKind
                 } else {
-                    if self.hand.contains(joker) {
-                        Rank::FourOfAKind
-                    } else {
-                        Rank::ThreeOfAKind
-                    }
+                    Rank::ThreeOfAKind
                 }
             }
             2 => {
@@ -162,12 +160,10 @@ impl CamelCard {
                     } else {
                         Rank::TwoPair
                     }
+                } else if self.hand.contains(joker) {
+                    Rank::ThreeOfAKind
                 } else {
-                    if self.hand.contains(joker) {
-                        Rank::ThreeOfAKind
-                    } else {
-                        Rank::OnePair
-                    }
+                    Rank::OnePair
                 }
             }
             1 => {
