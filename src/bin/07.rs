@@ -1,8 +1,10 @@
 advent_of_code::solution!(7);
 
-use nom::bytes::complete::take_while1;
-use nom::character::complete::{self, alphanumeric1, digit1, line_ending, space1};
-use nom::multi::{many1, many_till};
+use std::cmp::Ordering;
+
+
+use nom::character::complete::{self, alphanumeric1, space1};
+
 use nom::sequence::tuple;
 use nom::IResult;
 
@@ -17,7 +19,6 @@ use nom::IResult;
 //     HighCard,
 //     None,
 // }
-
 struct CamelCard {
     //TODO string or str
     hand: String,
@@ -47,7 +48,7 @@ impl<'a> CamelCard {
         chars.sort_unstable_by(|a, b| self.get_order(a).cmp(&self.get_order(b)).reverse());
         self.hand = chars.into_iter().collect();
     }
-   
+
     fn get_order(&self, c: &char) -> u8 {
         match c {
             'A' => 14,
@@ -64,7 +65,7 @@ impl<'a> CamelCard {
             let mut group = String::new();
             group.push(next);
 
-            while let Some(c) = it.next() {
+            for c in it.by_ref() {
                 if c == group.chars().last().expect("a char") {
                     group.push(c);
                 } else {
@@ -73,12 +74,13 @@ impl<'a> CamelCard {
                     group.push(c)
                 }
             }
-            if it.next() == None {
+            if it.next().is_none() {
                 self.groups.push(group)
             }
         }
         self.groups
             .sort_unstable_by(|a, b| a.len().cmp(&b.len()).reverse());
+        self.hand = self.groups.join("");
     }
     fn power(&mut self) {
         let max_len = self
@@ -112,31 +114,59 @@ impl<'a> CamelCard {
 }
 
 fn parse_line(input: &str) -> IResult<&str, CamelCard> {
-    let (input, (hand, _, bid, _)) =
-        tuple((alphanumeric1, space1, complete::u32, line_ending))(input)?;
+    let (input, (hand, _, bid)) = tuple((alphanumeric1, space1, complete::u32))(input)?;
 
     Ok((input, CamelCard::new(hand.to_string(), bid)))
 }
-fn parse(input: &str) -> IResult<&str, Vec<CamelCard>> {
-    let (input, cards) = many1(parse_line)(input)?;
-    Ok((input, cards))
+fn parse(input: &str) -> Vec<CamelCard> {
+    let cards = input
+        .lines()
+        .map(|_line| {
+            let (_input, card) = parse_line(_line).expect("Valid parse line.");
+            card
+        })
+        .collect();
+    cards
 }
 pub fn part_one(input: &str) -> Option<u32> {
-    let input = &advent_of_code::template::read_file("examples", DAY);
-    let (_, cards) = parse(&input).expect("Should parse successfully.");
-    let mut cards = cards;
+    let mut cards = parse(input);
     cards.sort_unstable_by_key(|a| a.power);
+
+    cards.sort_by(|a, b| {
+        let zip: Vec<(char, char)> = a
+            .hand
+            .chars()
+            .zip(b.hand.chars())
+            .collect();
+        let mut order = Ordering::Equal;
+        if a.power > b.power {
+            order = Ordering::Greater
+        } else if a.power < b.power {
+            order = Ordering::Less
+        } else {
+            for (x, y) in zip {
+                if a.get_order(&x) > b.get_order(&y) {
+                    order = Ordering::Greater;
+                    break;
+                } else if a.get_order(&x) < b.get_order(&y) {
+                    order = Ordering::Less;
+                    break;
+                }
+            }
+        }
+        order
+    });
 
     for (index, ele) in cards.iter_mut().enumerate() {
         ele.rank = index as u32 + 1;
     }
+
     let result = cards.iter().map(|x| x.bid * x.rank).sum::<u32>();
 
-    println!("{:?}", cards);
     Some(result)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(_input: &str) -> Option<u32> {
     None
 }
 
@@ -147,15 +177,13 @@ mod tests {
     #[test]
     fn test_parse() {
         let input = &advent_of_code::template::read_file("examples", DAY);
-        let (_, cards) = parse(&input).expect("Should parse successfully.");
-        let mut cards = cards;
+        let mut cards = parse(&input);
         cards.sort_unstable_by_key(|a| a.power);
 
         for (index, ele) in cards.iter_mut().enumerate() {
             ele.rank = index as u32 + 1;
         }
 
-        println!("{:?}", cards);
         assert_eq!(cards.len(), 5);
     }
 
