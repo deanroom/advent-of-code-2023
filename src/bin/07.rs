@@ -129,43 +129,24 @@ fn parse(input: &str) -> Vec<CamelCard> {
 }
 pub fn part_one(input: &str) -> Option<u32> {
     let mut cards = parse(input);
-    cards.sort_unstable_by_key(|a| a.power);
-
     cards.sort_by(|a, b| {
         let zip: Vec<(char, char)> = a.hand.chars().zip(b.hand.chars()).collect();
-        let mut order = match a.power.cmp(&b.power) {
-            Ordering::Less => Ordering::Less,
-            Ordering::Greater => Ordering::Greater,
+        let order = match a.power.cmp(&b.power) {
             Ordering::Equal => {
                 let mut order = Ordering::Equal;
                 for (x, y) in zip.iter() {
-                    if a.get_order(x) > b.get_order(y) {
-                        order = Ordering::Greater;
-                        break;
-                    } else if a.get_order(x) < b.get_order(y) {
-                        order = Ordering::Less;
-                        break;
+                    match a.get_order(x).cmp(&b.get_order(y)) {
+                        Ordering::Equal => continue,
+                        some_order => {
+                            order = some_order;
+                            break;
+                        }
                     }
                 }
                 order
             }
+            power_order => power_order,
         };
-
-        if a.power > b.power {
-            order = Ordering::Greater
-        } else if a.power < b.power {
-            order = Ordering::Less
-        } else {
-            for (x, y) in zip {
-                if a.get_order(&x) > b.get_order(&y) {
-                    order = Ordering::Greater;
-                    break;
-                } else if a.get_order(&x) < b.get_order(&y) {
-                    order = Ordering::Less;
-                    break;
-                }
-            }
-        }
         order
     });
 
@@ -189,7 +170,7 @@ mod tests {
     #[test]
     fn test_parse() {
         let input = &advent_of_code::template::read_file("examples", DAY);
-        let mut cards = parse(&input);
+        let mut cards = parse(input);
         cards.sort_unstable_by_key(|a| a.power);
 
         for (index, ele) in cards.iter_mut().enumerate() {
