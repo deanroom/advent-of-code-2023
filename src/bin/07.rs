@@ -2,7 +2,6 @@ advent_of_code::solution!(7);
 
 use std::cmp::Ordering;
 
-
 use nom::character::complete::{self, alphanumeric1, space1};
 
 use nom::sequence::tuple;
@@ -28,7 +27,7 @@ struct CamelCard {
     rank: u32,
 }
 
-impl<'a> CamelCard {
+impl CamelCard {
     fn new(hand: String, bid: u32) -> CamelCard {
         let mut card = CamelCard {
             hand,
@@ -133,12 +132,25 @@ pub fn part_one(input: &str) -> Option<u32> {
     cards.sort_unstable_by_key(|a| a.power);
 
     cards.sort_by(|a, b| {
-        let zip: Vec<(char, char)> = a
-            .hand
-            .chars()
-            .zip(b.hand.chars())
-            .collect();
-        let mut order = Ordering::Equal;
+        let zip: Vec<(char, char)> = a.hand.chars().zip(b.hand.chars()).collect();
+        let mut order = match a.power.cmp(&b.power) {
+            Ordering::Less => Ordering::Less,
+            Ordering::Greater => Ordering::Greater,
+            Ordering::Equal => {
+                let mut order = Ordering::Equal;
+                for (x, y) in zip.iter() {
+                    if a.get_order(x) > b.get_order(y) {
+                        order = Ordering::Greater;
+                        break;
+                    } else if a.get_order(x) < b.get_order(y) {
+                        order = Ordering::Less;
+                        break;
+                    }
+                }
+                order
+            }
+        };
+
         if a.power > b.power {
             order = Ordering::Greater
         } else if a.power < b.power {
