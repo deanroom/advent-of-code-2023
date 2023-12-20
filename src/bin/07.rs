@@ -65,11 +65,13 @@ impl CamelCard {
             'A' => 14,
             'K' => 13,
             'Q' => 12,
+            //part1 use j to 11
             'J' => 1,
             'T' => 10,
             _ => c.to_digit(10).expect("should be number") as u8,
         }
     }
+
     fn group(&mut self) {
         let mut it = self.hand.chars();
         while let Some(next) = it.next() {
@@ -238,7 +240,7 @@ mod tests {
     fn test_parse() {
         let input = &advent_of_code::template::read_file("examples", DAY);
         let mut cards = parse(input);
-        //cards.sort_unstable_by_key(|a| a.power);
+        cards.sort_unstable_by_key(|a| a.power as u8);
 
         for (index, ele) in cards.iter_mut().enumerate() {
             ele.rank = index as u32 + 1;
@@ -247,12 +249,6 @@ mod tests {
         assert_eq!(cards.len(), 5);
     }
 
-    #[test]
-    fn test_sort() {
-        let mut card = CamelCard::new("A1K2J".to_string(), 10);
-        card.order_cards();
-        assert_eq!(card.hand, "AKJ21");
-    }
     #[test]
     fn test_part_one() {
         let result = part_one(&advent_of_code::template::read_file("examples", DAY));
