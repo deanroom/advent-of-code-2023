@@ -16,7 +16,6 @@ enum Rank {
     None = 0,
 }
 struct CamelCard {
-    //TODO string or str
     hand: String,
     origin_hand: String,
     bid: u32,
@@ -201,12 +200,6 @@ pub fn part_one(input: &str) -> Option<u32> {
     for (index, ele) in cards.iter_mut().enumerate() {
         ele.rank = index as u32 + 1;
     }
-    // cards.iter().for_each(|card| {
-    //     println!(
-    //         "{},{:?},{},{}",
-    //         card.origin_hand, card.power, card.bid, card.rank
-    //     )
-    // });
 
     let result = cards.iter().map(|x| x.bid * x.rank).sum::<u32>();
 
@@ -220,12 +213,6 @@ pub fn part_two(input: &str) -> Option<u32> {
     for (index, ele) in cards.iter_mut().enumerate() {
         ele.rank = index as u32 + 1;
     }
-    // cards.iter().for_each(|card| {
-    //     println!(
-    //         "{},{:?},{},{}",
-    //         card.origin_hand, card.power2, card.bid, card.rank
-    //     )
-    // });
 
     let result = cards.iter().map(|x| x.bid * x.rank).sum::<u32>();
 
