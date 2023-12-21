@@ -15,7 +15,7 @@ fn parse(input: &str) -> Vec<Vec<i32>> {
 }
 
 fn fill_number(input: &[i32]) -> i32 {
-    let mut count = *input.last().expect("must be a number.");
+    let mut last = *input.last().expect("must be a number.");
     let output: Vec<i32> = input
         .iter()
         .enumerate()
@@ -23,10 +23,22 @@ fn fill_number(input: &[i32]) -> i32 {
         .map(|(index, num)| *num - input[index - 1])
         .collect();
     if output.iter().any(|x| *x != 0) {
-        count += fill_number(&output)
+        last += fill_number(&output)
     }
-    println!("{:?}", output);
-    count
+    last
+}
+fn fill_number_two(input: &[i32]) -> i32 {
+    let mut first: i32 = *input.first().expect("must be a number.");
+    let output: Vec<i32> = input
+        .iter()
+        .enumerate()
+        .filter(|x| x.0 > 0)
+        .map(|(index, num)| *num - input[index - 1])
+        .collect();
+    if output.iter().any(|x| *x != 0) {
+        first = -1*fill_number_two(&output)+first;
+    }
+    first
 }
 
 pub fn part_one(input: &str) -> Option<i32> {
@@ -38,8 +50,13 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(result)
 }
 
-pub fn part_two(_input: &str) -> Option<i32> {
-    None
+pub fn part_two(input: &str) -> Option<i32> {
+    let input = parse(input);
+    let result = input.iter().fold(0, |acc, x| {
+        let output = fill_number_two(x);
+        acc + output
+    });
+    Some(result)
 }
 
 #[cfg(test)]
@@ -71,6 +88,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(2));
     }
 }
