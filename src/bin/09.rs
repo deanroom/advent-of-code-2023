@@ -3,7 +3,6 @@ advent_of_code::solution!(9);
 fn parse(input: &str) -> Vec<Vec<i32>> {
     let output: Vec<Vec<i32>> = input
         .lines()
-        .into_iter()
         .map(|line| {
             let line_number: Vec<i32> = line
                 .split(' ')
@@ -15,7 +14,7 @@ fn parse(input: &str) -> Vec<Vec<i32>> {
     output
 }
 
-fn fill_number(input: &Vec<i32>) -> i32 {
+fn fill_number(input: &[i32]) -> i32 {
     let mut count = *input.last().expect("must be a number.");
     let output: Vec<i32> = input
         .iter()
@@ -24,7 +23,7 @@ fn fill_number(input: &Vec<i32>) -> i32 {
         .map(|(index, num)| *num - input[index - 1])
         .collect();
     if output.iter().any(|x| *x != 0) {
-        count = count + fill_number(&output)
+        count += fill_number(&output)
     }
     println!("{:?}", output);
     count
@@ -39,7 +38,7 @@ pub fn part_one(input: &str) -> Option<i32> {
     Some(result)
 }
 
-pub fn part_two(input: &str) -> Option<i32> {
+pub fn part_two(_input: &str) -> Option<i32> {
     None
 }
 
