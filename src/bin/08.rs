@@ -1,8 +1,5 @@
 use std::collections::BTreeMap;
 advent_of_code::solution!(8);
-//TODO
-// BTreeMap 和 HahMap 的区别
-// 最小公倍数计算
 
 #[derive(Debug, Default)]
 struct Map<'a> {
@@ -72,11 +69,15 @@ fn parse(input: &str) -> Map {
         nodes: BTreeMap::<String, Node>::from_iter(output),
     }
 }
+// 最小公倍数计算,主要用到了两个原理:lcm(a,b)*gcd(a,b)=a*b 和 辗转相除法
+// 最大公因数gcd(a,b)使用辗转相除法得出，即两个数的最大公因数
+// 等于其整除后使用除数再除以余数直到余数为0，那么最后一次使用的除数就是最大公因数
+
 pub fn lcm(numbers: &[usize]) -> usize {
     if numbers.len() == 1 {
         return numbers[0];
     }
-    let a = numbers[0];
+    let a: usize = numbers[0];
     let b = lcm(&numbers[1..]);
     a * b / gcd_of_two_numbers(a, b)
 }
@@ -85,7 +86,7 @@ fn gcd_of_two_numbers(a: usize, b: usize) -> usize {
     if b == 0 {
         return a;
     }
-    gcd_of_two_numbers(b, a % b)
+   gcd_of_two_numbers(b, a % b)
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -128,6 +129,11 @@ pub fn part_two(input: &str) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_gcd(){
+        assert_eq!(gcd_of_two_numbers(18,12),6);
+    }
 
     #[test]
     fn test_parse() {
