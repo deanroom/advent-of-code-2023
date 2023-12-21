@@ -53,20 +53,19 @@ fn parse(input: &str) -> Map {
     let instructions = lines.next().expect("must be instructions.");
 
     lines.next();
-    let output = lines
-        .map(|line| {
-            let output: Vec<&str> = line
-                .split(&[' ', '=', '(', ',', ')'][..])
-                .filter(|x| *x != " " && !x.is_empty())
-                .collect();
-            (
-                output[0].to_string(),
-                Node {
-                    left: output[1].to_string(),
-                    right: output[2].to_string(),
-                },
-            )
-        });
+    let output = lines.map(|line| {
+        let output: Vec<&str> = line
+            .split(&[' ', '=', '(', ',', ')'][..])
+            .filter(|x| *x != " " && !x.is_empty())
+            .collect();
+        (
+            output[0].to_string(),
+            Node {
+                left: output[1].to_string(),
+                right: output[2].to_string(),
+            },
+        )
+    });
 
     Map {
         instructions,
