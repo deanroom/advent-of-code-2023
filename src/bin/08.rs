@@ -86,7 +86,7 @@ fn gcd_of_two_numbers(a: usize, b: usize) -> usize {
     if b == 0 {
         return a;
     }
-   gcd_of_two_numbers(b, a % b)
+    gcd_of_two_numbers(b, a % b)
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -131,8 +131,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_gcd(){
-        assert_eq!(gcd_of_two_numbers(18,12),6);
+    fn test_gcd() {
+        assert_eq!(gcd_of_two_numbers(18, 12), 6);
     }
 
     #[test]

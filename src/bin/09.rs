@@ -36,7 +36,7 @@ fn fill_number_two(input: &[i32]) -> i32 {
         .map(|(index, num)| *num - input[index - 1])
         .collect();
     if output.iter().any(|x| *x != 0) {
-        first = -1*fill_number_two(&output)+first;
+        first += -fill_number_two(&output);
     }
     first
 }
