@@ -1,10 +1,8 @@
-use nom::character::complete::{self, alpha1, alphanumeric1, space1};
-use nom::sequence::tuple;
-use nom::IResult;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 advent_of_code::solution!(8);
 //TODO
-// btreemap 和hashmap的区别
+// BTreeMap 和 HahMap 的区别
+// 最小公倍数计算
 
 #[derive(Debug, Default)]
 struct Map<'a> {
@@ -23,7 +21,7 @@ impl<'a> Map<'a> {
         let next_node = self
             .nodes
             .get(node)
-            .expect("node must be found.")
+            .expect(format!("node [{}] must be found.", node).as_str())
             .left
             .as_str();
         next_node
@@ -32,46 +30,40 @@ impl<'a> Map<'a> {
         let next_node = self
             .nodes
             .get(node)
-            .expect("node must be found.")
+            .expect(format!("node [{}] must be found.", node).as_str())
             .right
             .as_str();
         next_node
     }
-    fn run(&self, node: &'a str) -> (&str, u32) {
+    fn run(&self, node: &'a str) -> &str {
         let mut out_node: &str = node;
-        let mut steps: u32 = 0;
         for instruction in self.instructions.chars() {
             out_node = match instruction {
                 'L' => self.left(out_node),
                 'R' => self.right(out_node),
                 _ => panic!(),
             };
-            steps += 1;
         }
-        (out_node, steps)
+        out_node
     }
 }
 
-// fn parse_line(input: &str) -> IResult<&str, Node> {
-//     let result  = tuple((alpha1, space1,space1,space1,alpha1))(input)?;
-//     Ok((input,Node{ left: todo!(), right: todo!() }))
-// }
 fn parse(input: &str) -> Map {
     let mut lines = input.lines();
     let instructions = lines.next().expect("must be instructions.");
 
     lines.next();
-    let ouput = lines
+    let output = lines
         .map(|line| {
-            let ouput: Vec<&str> = line
+            let output: Vec<&str> = line
                 .split(&[' ', '=', '(', ',', ')'][..])
                 .filter(|x| *x != " " && *x != "")
                 .collect();
             (
-                ouput[0].to_string(),
+                output[0].to_string(),
                 Node {
-                    left: ouput[1].to_string(),
-                    right: ouput[2].to_string(),
+                    left: output[1].to_string(),
+                    right: output[2].to_string(),
                 },
             )
         })
@@ -79,8 +71,23 @@ fn parse(input: &str) -> Map {
 
     Map {
         instructions,
-        nodes: BTreeMap::<String, Node>::from_iter(ouput),
+        nodes: BTreeMap::<String, Node>::from_iter(output),
     }
+}
+pub fn lcm(numbers: &[usize]) -> usize {
+    if numbers.len() == 1 {
+        return numbers[0];
+    }
+    let a = numbers[0];
+    let b = lcm(&numbers[1..]);
+    a * b / gcd_of_two_numbers(a, b)
+}
+
+fn gcd_of_two_numbers(a: usize, b: usize) -> usize {
+    if b == 0 {
+        return a;
+    }
+    gcd_of_two_numbers(b, a % b)
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -88,16 +95,38 @@ pub fn part_one(input: &str) -> Option<u32> {
     let mut node = "AAA";
     let mut steps = 0;
     while node != "ZZZ" {
-        let (new_node, step) = map.run(node);
-        node = new_node;
-        steps += step;
+        node = map.run(node);
+        node = node;
+        steps += map.instructions.len();
     }
 
-    Some(steps)
+    Some(steps as u32)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let map = parse(input);
+    let start_nodes: Vec<&str> = map
+        .nodes
+        .iter()
+        .filter(|x| x.0.ends_with("A"))
+        .map(|x| x.0.as_str())
+        .collect();
+
+    let steps: Vec<usize> = start_nodes
+        .iter()
+        .map(|x| {
+            let mut node = *x;
+            let mut steps = 0;
+            while !node.ends_with("Z") {
+                node = map.run(node);
+                node = node;
+                steps += map.instructions.len();
+            }
+            steps
+        })
+        .collect();
+    let result = lcm(&steps);
+    Some(result)
 }
 
 #[cfg(test)]
@@ -111,7 +140,6 @@ mod tests {
         assert_eq!(map.instructions, "RL");
         assert_eq!(map.nodes.len(), 7);
         assert_eq!(map.nodes.get("CCC").expect("A node.").right, "GGG");
-        println!("{:?}", map);
     }
 
     #[test]
@@ -122,7 +150,9 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        let result = part_two(&advent_of_code::template::read_file_part(
+            "examples", DAY, 2,
+        ));
+        assert_eq!(result, Some(6));
     }
 }
