@@ -21,7 +21,7 @@ impl<'a> Map<'a> {
         let next_node = self
             .nodes
             .get(node)
-            .expect(format!("node [{}] must be found.", node).as_str())
+            .unwrap_or_else(|| panic!("node [{}] must be found.", node))
             .left
             .as_str();
         next_node
@@ -30,7 +30,7 @@ impl<'a> Map<'a> {
         let next_node = self
             .nodes
             .get(node)
-            .expect(format!("node [{}] must be found.", node).as_str())
+            .unwrap_or_else(|| panic!("node [{}] must be found.", node))
             .right
             .as_str();
         next_node
@@ -57,7 +57,7 @@ fn parse(input: &str) -> Map {
         .map(|line| {
             let output: Vec<&str> = line
                 .split(&[' ', '=', '(', ',', ')'][..])
-                .filter(|x| *x != " " && *x != "")
+                .filter(|x| *x != " " && !x.is_empty())
                 .collect();
             (
                 output[0].to_string(),
@@ -66,8 +66,7 @@ fn parse(input: &str) -> Map {
                     right: output[2].to_string(),
                 },
             )
-        })
-        .into_iter();
+        });
 
     Map {
         instructions,
@@ -96,7 +95,6 @@ pub fn part_one(input: &str) -> Option<u32> {
     let mut steps = 0;
     while node != "ZZZ" {
         node = map.run(node);
-        node = node;
         steps += map.instructions.len();
     }
 
@@ -108,7 +106,7 @@ pub fn part_two(input: &str) -> Option<usize> {
     let start_nodes: Vec<&str> = map
         .nodes
         .iter()
-        .filter(|x| x.0.ends_with("A"))
+        .filter(|x| x.0.ends_with('A'))
         .map(|x| x.0.as_str())
         .collect();
 
@@ -117,9 +115,8 @@ pub fn part_two(input: &str) -> Option<usize> {
         .map(|x| {
             let mut node = *x;
             let mut steps = 0;
-            while !node.ends_with("Z") {
+            while !node.ends_with('Z') {
                 node = map.run(node);
-                node = node;
                 steps += map.instructions.len();
             }
             steps
@@ -136,7 +133,7 @@ mod tests {
     #[test]
     fn test_parse() {
         let input = &advent_of_code::template::read_file("examples", DAY);
-        let map = parse(&input);
+        let map = parse(input);
         assert_eq!(map.instructions, "RL");
         assert_eq!(map.nodes.len(), 7);
         assert_eq!(map.nodes.get("CCC").expect("A node.").right, "GGG");
