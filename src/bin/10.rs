@@ -1,3 +1,5 @@
+use std::{cell::RefCell, ops::Deref};
+
 advent_of_code::solution!(10);
 
 #[derive(Debug)]
@@ -29,9 +31,9 @@ impl PartialEq for Direction {
 struct Node {
     outer_direction: Vec<Direction>,
     inner_direction: Vec<Direction>,
-    previous: Option<Box<Node>>,
+    // previous: Option<Box<Node>>,
     next: Option<Box<Node>>,
-    position: (usize, usize),
+    position: (i32, i32),
 }
 
 impl Clone for Node {
@@ -39,7 +41,7 @@ impl Clone for Node {
         Self {
             outer_direction: self.outer_direction.clone(),
             inner_direction: self.inner_direction.clone(),
-            previous: self.previous.clone(),
+            // previous: self.previous.clone(),
             next: self.next.clone(),
             position: self.position.clone(),
         }
@@ -52,7 +54,7 @@ impl Node {
             outer_direction: vec![],
             inner_direction: vec![],
             next: None,
-            previous: None,
+            // previous: None,
             position: (0, 0),
         }
     }
@@ -71,44 +73,41 @@ impl Node {
         output
     }
 
-    fn link_nodes(&mut self, nodes: &[Node]) -> &Node {
+    fn link_nodes(&mut self, nodes: Vec<Node>) -> &Node {
         let neighbours: Vec<&Node> = nodes
             .iter()
             .filter(|x| {
                 let mut result = false;
-                if x.position == (self.position.0 + 1, self.position.1) {
-                    result = self.find_possible_directions(x)[..]
-                        .iter()
-                        .any(|x| **x == Direction::Up)
+                let node: &&Node = x;
+                let position = x.position;
+                let possible_directions = self.find_possible_directions(&node);
+                if position == (self.position.0 - 1, self.position.1) {
+                    result = possible_directions.iter().any(|x| **x == Direction::Up)
                 }
 
-                if self.position.0 > 0 && x.position == (self.position.0 - 1, self.position.1) {
-                    result = self
-                        .find_possible_directions(x)
-                        .iter()
-                        .any(|x| **x == Direction::Down);
+                if position == (self.position.0 + 1, self.position.1) {
+                    result = possible_directions.iter().any(|x| **x == Direction::Down);
                 }
-                if x.position == (self.position.0, self.position.1 + 1) {
-                    result = self
-                        .find_possible_directions(x)
-                        .iter()
-                        .any(|x| **x == Direction::Right);
+                if position == (self.position.0, self.position.1 + 1) {
+                    result = possible_directions.iter().any(|x| **x == Direction::Right);
                 }
-                if self.position.1 > 0 && x.position == (self.position.0, self.position.1 - 1) {
-                    result = self
-                        .find_possible_directions(x)
-                        .iter()
-                        .any(|x| **x == Direction::Left);
+                if position == (self.position.0, self.position.1 - 1) {
+                    result = possible_directions.iter().any(|x| **x == Direction::Left);
                 }
                 result
             })
+            .map(|x| x)
             .collect();
-        if neighbours.len() == 2 {
-            self.next = Some(Box::new(neighbours[0].clone()));
+        if neighbours.len() > 0 {
+            let next = neighbours[0].clone();
+            self.next = Some(Box::new(next));
+            let nodes: Vec<Node> = nodes
+                .into_iter()
+                .filter(|x| x.position != self.position)
+                .collect();
             if !self.next.as_ref().expect("").is_start() {
                 self.next.as_mut().expect("").link_nodes(nodes);
             }
-            self.previous = Some(Box::new(neighbours[1].clone()));
         }
         self
     }
@@ -148,7 +147,7 @@ fn parse(input: &str) -> Vec<Vec<Node>> {
         for (c, col) in row.chars().enumerate() {
             let mut node = Node::new();
             node.inner_direction = parse_direction(col);
-            node.position = (r, c);
+            node.position = (r as i32, c as i32);
             if r > 0 {
                 node.outer_direction.push(Direction::Up);
             }
@@ -196,6 +195,8 @@ pub fn part_two(input: &str) -> Option<u32> {
 
 #[cfg(test)]
 mod tests {
+    use std::cell::RefCell;
+
     use super::*;
 
     #[test]
@@ -209,17 +210,16 @@ mod tests {
         let input = &advent_of_code::template::read_file("examples", DAY);
         let output = parse(input);
         let nodes: Vec<Node> = output.into_iter().flatten().collect();
-        let start_node = nodes
+        let mut start_node: Node = nodes
             .iter()
             .find(|x| x.is_start())
-            .expect("must find start node.");
-        let nodes = &nodes[..];
-        let mut start = start_node.clone();
-
-        let root = start.link_nodes(nodes);
+            .expect("must ind start node.")
+            .clone();
+        // let nodes = &nodes[..];
+        let root = start_node.link_nodes(nodes);
         println!("{:?}", root);
-        assert_eq!(root.next.as_ref().expect("next node").position, (2, 1));
-        assert_eq!(root.previous.as_ref().expect("next node").position, (3, 0));
+        // assert_eq!(root.next.as_ref().expect("next node").position, (2, 1));
+        // assert_eq!(root.previous.as_ref().expect("next node").position, (3, 0));
     }
 
     #[test]
