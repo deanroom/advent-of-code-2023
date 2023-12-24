@@ -105,6 +105,9 @@ impl Node {
             .collect();
         if neighbours.len() == 2 {
             self.next = Some(Box::new(neighbours[0].clone()));
+            if !self.next.as_ref().expect("").is_start() {
+                self.next.as_mut().expect("").link_nodes(nodes);
+            }
             self.previous = Some(Box::new(neighbours[1].clone()));
         }
         self
@@ -199,25 +202,22 @@ mod tests {
     fn test_parse() {
         let input = &advent_of_code::template::read_file("examples", DAY);
         let output = parse(input);
-
-        // output[0][0]
-        //     .inner_direction
-        //     .iter()
-        //     .for_each(|x| println!("{:?}", x));
     }
+
     #[test]
     fn test_move() {
         let input = &advent_of_code::template::read_file("examples", DAY);
         let output = parse(input);
-        let flattened_nodes: Vec<Node> = output.into_iter().flatten().collect();
-
-        let start_node = flattened_nodes
+        let nodes: Vec<Node> = output.into_iter().flatten().collect();
+        let start_node = nodes
             .iter()
             .find(|x| x.is_start())
             .expect("must find start node.");
-
+        let nodes = &nodes[..];
         let mut start = start_node.clone();
-        let root = start.link_nodes(&flattened_nodes[..]);
+
+        let root = start.link_nodes(nodes);
+        println!("{:?}", root);
         assert_eq!(root.next.as_ref().expect("next node").position, (2, 1));
         assert_eq!(root.previous.as_ref().expect("next node").position, (3, 0));
     }
