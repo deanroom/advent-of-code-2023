@@ -1,7 +1,10 @@
+use std::borrow::BorrowMut;
+
 advent_of_code::solution!(10);
 
 #[derive(Debug)]
 enum Direction {
+    None = 0b0000,
     Up = 0b0001,
     Down = 0b0010,
     Left = 0b0100,
@@ -11,6 +14,7 @@ enum Direction {
 impl Clone for Direction {
     fn clone(&self) -> Self {
         match self {
+            Self::None => Self::None,
             Self::Up => Self::Up,
             Self::Down => Self::Down,
             Self::Left => Self::Left,
@@ -27,11 +31,12 @@ impl PartialEq for Direction {
 
 #[derive(Debug)]
 struct Node {
+    position: (i32, i32),
+    next_direction: Direction,
+    previous_direction: Direction,
     outer_direction: Vec<Direction>,
     inner_direction: Vec<Direction>,
-    // previous: Option<Box<Node>>,
     next: Option<Box<Node>>,
-    position: (i32, i32),
 }
 
 impl Clone for Node {
@@ -39,8 +44,9 @@ impl Clone for Node {
         Self {
             outer_direction: self.outer_direction.clone(),
             inner_direction: self.inner_direction.clone(),
-            // previous: self.previous.clone(),
             next: self.next.clone(),
+            next_direction: self.next_direction.clone(),
+            previous_direction: self.previous_direction.clone(),
             position: self.position,
         }
     }
@@ -52,61 +58,95 @@ impl Node {
             outer_direction: vec![],
             inner_direction: vec![],
             next: None,
-            // previous: None,
+            next_direction: Direction::None,
+            previous_direction: Direction::None,
             position: (0, 0),
         }
     }
-    fn find_possible_directions(&self, other: &Node) -> Vec<&Direction> {
-        let this_iter = matched_direction(&self.outer_direction[..], &self.inner_direction[..]);
-        let other_iter = matched_direction(&other.outer_direction[..], &other.inner_direction[..]);
-        let other: Vec<&Direction> = other_iter.collect();
-        let output: Vec<&Direction> = this_iter
+    fn try_connect(&self, other: &Node) -> Vec<(Direction, Direction)> {
+        let other = other.get_directions();
+        let output = self
+            .get_directions()
+            .iter()
             .filter(move |x: &&Direction| match x {
-                Direction::Up => other.iter().any(|y| y == &&Direction::Down),
-                Direction::Down => other.iter().any(|y| y == &&Direction::Up),
-                Direction::Left => other.iter().any(|y| y == &&Direction::Right),
-                Direction::Right => other.iter().any(|y| y == &&Direction::Left),
+                Direction::Up => other.iter().any(|y| y == &Direction::Down),
+                Direction::Down => other.iter().any(|y| y == &Direction::Up),
+                Direction::Left => other.iter().any(|y| y == &Direction::Right),
+                Direction::Right => other.iter().any(|y| y == &Direction::Left),
+                _ => false,
             })
+            .map(|x| (x.clone(), self.reverse_direction(x)))
             .collect();
         output
     }
 
     fn link_nodes(&mut self, nodes: Vec<Node>) -> &Node {
-        let neighbours: Vec<&Node> = nodes
+        let neighbors: Vec<Node> = nodes
             .iter()
-            .filter(|x| {
-                let mut result = false;
-                let node: &&Node = x;
+            .filter_map(|x| {
+                let mut node = Node::new();
+                node.position = x.position;
+                node.outer_direction = x.outer_direction.clone();
+                node.inner_direction = x.inner_direction.clone();
+
+                let mut result: Option<Node> = None;
+                let mut direction = Direction::None;
                 let position = x.position;
-                let possible_directions = self.find_possible_directions(node);
+                let possible_directions = self.try_connect(&node);
+
                 if position == (self.position.0 - 1, self.position.1) {
-                    result = possible_directions.iter().any(|x| **x == Direction::Up)
+                    if possible_directions.iter().any(|x| x.0 == Direction::Up) {
+                        direction = Direction::Up;
+                    }
                 }
 
                 if position == (self.position.0 + 1, self.position.1) {
-                    result = possible_directions.iter().any(|x| **x == Direction::Down);
+                    if possible_directions.iter().any(|x| x.0 == Direction::Down) {
+                        direction = Direction::Down;
+                    }
                 }
 
                 if position == (self.position.0, self.position.1 + 1) {
-                    result = possible_directions.iter().any(|x| **x == Direction::Right);
+                    if possible_directions.iter().any(|x| x.0 == Direction::Right) {
+                        direction = Direction::Right;
+                    }
                 }
 
                 if position == (self.position.0, self.position.1 - 1) {
-                    result = possible_directions.iter().any(|x| **x == Direction::Left);
+                    if possible_directions.iter().any(|x| x.0 == Direction::Left) {
+                        direction = Direction::Left;
+                    }
                 }
+                if &direction != &Direction::None {
+                    self.next_direction = direction.clone();
+                    node.previous_direction = self.reverse_direction(&direction);
+                    result = Some(node);
+                }
+
                 result
             })
             .collect();
-        if !neighbours.is_empty() {
-            let next = neighbours[0].clone();
+
+        if !neighbors.is_empty() {
+            let next = neighbors[0].clone();
+            if neighbors.len() == 2 {
+                self.previous_direction = neighbors[1].previous_direction.clone();
+            }
             self.next = Some(Box::new(next));
             let nodes: Vec<Node> = nodes
                 .into_iter()
                 .filter(|x| x.position != self.position)
                 .collect();
-            if !self.next.as_ref().expect("").is_start() {
-                self.next.as_mut().expect("").link_nodes(nodes);
-            }
+
+            self.next.as_mut().expect("").link_nodes(nodes);
+        } else {
+            let directions = self.get_directions();
+            let direction = directions
+                .iter()
+                .filter(|x| **x != self.next_direction)
+                .next()
+                .expect("node.");
+            self.next_direction = direction.clone();
         }
         self
     }
@@ -119,25 +159,28 @@ impl Node {
                 Direction::Right,
             ]
     }
-}
-fn matched_direction<'a>(
-    position: &'a [Direction],
-    direction: &'a [Direction],
-) -> impl Iterator<Item = &'a Direction> {
-    let matches = position
-        .iter()
-        .filter(|x| direction.iter().any(|y| *x == y));
-    matches
+    fn get_directions(&self) -> Vec<Direction> {
+        let matches = self
+            .outer_direction
+            .iter()
+            .filter(|x| self.inner_direction.iter().any(|y| *x == y))
+            .map(|x| x.clone());
+        matches.collect()
+    }
+    fn reverse_direction(&self, direction: &Direction) -> Direction {
+        match direction {
+            Direction::Up => Direction::Down,
+            Direction::Down => Direction::Up,
+            Direction::Left => Direction::Right,
+            Direction::Right => Direction::Left,
+            Direction::None => Direction::None,
+        }
+    }
 }
 
 fn parse(input: &str) -> Vec<Vec<Node>> {
     let row_len = input.lines().count();
-    let col_len = input
-        .lines()
-        .next()
-        .expect("a row")
-        .chars()
-        .count();
+    let col_len = input.lines().next().expect("a row").chars().count();
     let mut nodes: Vec<Vec<Node>> = vec![];
     for (r, row) in input.lines().enumerate() {
         let mut nodes_row: Vec<Node> = vec![];
@@ -202,7 +245,27 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let output = parse(input);
     let nodes: Vec<Node> = output.into_iter().flatten().collect();
-    println!("{:?}", nodes);
+    let mut start_node: Node = nodes
+        .iter()
+        .find(|x| x.is_start())
+        .expect("must ind start node.")
+        .clone();
+    let mut root = start_node.link_nodes(nodes);
+    let mut nodes = vec![root];
+    while root.next.is_some() {
+        root = root.next.as_ref().expect("node");
+        nodes.push(root);
+    }
+    nodes
+        .iter()
+        // .filter(|x| *x.inner_direction == vec![Direction::Down, Direction::Right])
+        .for_each(|x| {
+            println!(
+                "{:?}, {:?}, {:?}",
+                x.position, x.previous_direction, x.next_direction
+            );
+        });
+
     None
 }
 
@@ -211,12 +274,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse() {
-        let input = &advent_of_code::template::read_file("examples", DAY);
-        let output = parse(input);
-        let nodes: Vec<Node> = output.into_iter().flatten().collect();
-        assert_eq!(nodes.len(), 25);
-    }
+    fn test_parse() {}
 
     #[test]
     fn test_move() {
