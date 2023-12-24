@@ -41,7 +41,7 @@ impl Clone for Node {
             inner_direction: self.inner_direction.clone(),
             // previous: self.previous.clone(),
             next: self.next.clone(),
-            position: self.position.clone(),
+            position: self.position,
         }
     }
 }
@@ -78,7 +78,7 @@ impl Node {
                 let mut result = false;
                 let node: &&Node = x;
                 let position = x.position;
-                let possible_directions = self.find_possible_directions(&node);
+                let possible_directions = self.find_possible_directions(node);
                 if position == (self.position.0 - 1, self.position.1) {
                     result = possible_directions.iter().any(|x| **x == Direction::Up)
                 }
@@ -96,9 +96,8 @@ impl Node {
                 }
                 result
             })
-            .map(|x| x)
             .collect();
-        if neighbours.len() > 0 {
+        if !neighbours.is_empty() {
             let next = neighbours[0].clone();
             self.next = Some(Box::new(next));
             let nodes: Vec<Node> = nodes
@@ -127,8 +126,7 @@ fn matched_direction<'a>(
 ) -> impl Iterator<Item = &'a Direction> {
     let matches = position
         .iter()
-        .filter(|x| direction.iter().any(|y| *x == y))
-        .map(|x| x);
+        .filter(|x| direction.iter().any(|y| *x == y));
     matches
 }
 
@@ -136,7 +134,6 @@ fn parse(input: &str) -> Vec<Vec<Node>> {
     let row_len = input.lines().count();
     let col_len = input
         .lines()
-        .into_iter()
         .next()
         .expect("a row")
         .chars()
