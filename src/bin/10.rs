@@ -1,5 +1,3 @@
-use std::{cell::RefCell, ops::Deref};
-
 advent_of_code::solution!(10);
 
 #[derive(Debug)]
@@ -88,9 +86,11 @@ impl Node {
                 if position == (self.position.0 + 1, self.position.1) {
                     result = possible_directions.iter().any(|x| **x == Direction::Down);
                 }
+
                 if position == (self.position.0, self.position.1 + 1) {
                     result = possible_directions.iter().any(|x| **x == Direction::Right);
                 }
+
                 if position == (self.position.0, self.position.1 - 1) {
                     result = possible_directions.iter().any(|x| **x == Direction::Left);
                 }
@@ -186,23 +186,39 @@ fn parse_direction(c: char) -> Vec<Direction> {
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    None
+    let output = parse(input);
+    let nodes: Vec<Node> = output.into_iter().flatten().collect();
+    let mut start_node: Node = nodes
+        .iter()
+        .find(|x| x.is_start())
+        .expect("must ind start node.")
+        .clone();
+    let mut root = start_node.link_nodes(nodes);
+    let mut count = 1;
+    while root.next.is_some() {
+        root = root.next.as_ref().expect("node");
+        count += 1;
+    }
+    Some((count + 1) / 2)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
+    let output = parse(input);
+    let nodes: Vec<Node> = output.into_iter().flatten().collect();
+    println!("{:?}", nodes);
     None
 }
 
 #[cfg(test)]
 mod tests {
-    use std::cell::RefCell;
-
     use super::*;
 
     #[test]
     fn test_parse() {
         let input = &advent_of_code::template::read_file("examples", DAY);
         let output = parse(input);
+        let nodes: Vec<Node> = output.into_iter().flatten().collect();
+        assert_eq!(nodes.len(), 25);
     }
 
     #[test]
@@ -215,17 +231,14 @@ mod tests {
             .find(|x| x.is_start())
             .expect("must ind start node.")
             .clone();
-        // let nodes = &nodes[..];
         let root = start_node.link_nodes(nodes);
         println!("{:?}", root);
-        // assert_eq!(root.next.as_ref().expect("next node").position, (2, 1));
-        // assert_eq!(root.previous.as_ref().expect("next node").position, (3, 0));
     }
 
     #[test]
     fn test_part_one() {
         let result = part_one(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(8));
     }
 
     #[test]
