@@ -1,5 +1,3 @@
-use std::borrow::BorrowMut;
-
 advent_of_code::solution!(10);
 
 #[derive(Debug)]
@@ -94,30 +92,31 @@ impl Node {
                 let position = x.position;
                 let possible_directions = self.try_connect(&node);
 
-                if position == (self.position.0 - 1, self.position.1) {
-                    if possible_directions.iter().any(|x| x.0 == Direction::Up) {
-                        direction = Direction::Up;
-                    }
+                if position == (self.position.0 - 1, self.position.1)
+                    && possible_directions.iter().any(|x| x.0 == Direction::Up)
+                {
+                    direction = Direction::Up;
                 }
 
-                if position == (self.position.0 + 1, self.position.1) {
-                    if possible_directions.iter().any(|x| x.0 == Direction::Down) {
-                        direction = Direction::Down;
-                    }
+                if position == (self.position.0 + 1, self.position.1)
+                    && possible_directions.iter().any(|x| x.0 == Direction::Down)
+                {
+                    direction = Direction::Down;
                 }
 
-                if position == (self.position.0, self.position.1 + 1) {
-                    if possible_directions.iter().any(|x| x.0 == Direction::Right) {
-                        direction = Direction::Right;
-                    }
+                if position == (self.position.0, self.position.1 + 1)
+                    && possible_directions.iter().any(|x| x.0 == Direction::Right)
+                {
+                    direction = Direction::Right;
                 }
 
-                if position == (self.position.0, self.position.1 - 1) {
-                    if possible_directions.iter().any(|x| x.0 == Direction::Left) {
-                        direction = Direction::Left;
-                    }
+                if position == (self.position.0, self.position.1 - 1)
+                    && possible_directions.iter().any(|x| x.0 == Direction::Left)
+                {
+                    direction = Direction::Left;
                 }
-                if &direction != &Direction::None {
+                
+                if direction != Direction::None {
                     self.next_direction = direction.clone();
                     node.previous_direction = self.reverse_direction(&direction);
                     result = Some(node);
@@ -143,8 +142,7 @@ impl Node {
             let directions = self.get_directions();
             let direction = directions
                 .iter()
-                .filter(|x| **x != self.next_direction)
-                .next()
+                .find(|x| **x != self.next_direction)
                 .expect("node.");
             self.next_direction = direction.clone();
         }
@@ -164,7 +162,7 @@ impl Node {
             .outer_direction
             .iter()
             .filter(|x| self.inner_direction.iter().any(|y| *x == y))
-            .map(|x| x.clone());
+            .cloned();
         matches.collect()
     }
     fn reverse_direction(&self, direction: &Direction) -> Direction {
