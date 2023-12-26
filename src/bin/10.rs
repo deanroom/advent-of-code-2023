@@ -60,20 +60,14 @@ impl Node {
                 let position = x.position;
                 let possible_directions = self.try_connect(&node);
 
-                if position == (self.position.0 - 1, self.position.1)
-                    && possible_directions.iter().any(|x| x.0 == Direction::North)
-                {
-                    Some(node)
-                } else if position == (self.position.0 + 1, self.position.1)
-                    && possible_directions.iter().any(|x| x.0 == Direction::South)
-                {
-                    Some(node)
-                } else if position == (self.position.0, self.position.1 + 1)
-                    && possible_directions.iter().any(|x| x.0 == Direction::East)
-                {
-                    Some(node)
-                } else if position == (self.position.0, self.position.1 - 1)
-                    && possible_directions.iter().any(|x| x.0 == Direction::West)
+                if (position == (self.position.0 - 1, self.position.1)
+                    && possible_directions.iter().any(|x| x.0 == Direction::North))
+                    || (position == (self.position.0 + 1, self.position.1))
+                        && possible_directions.iter().any(|x| x.0 == Direction::South)
+                    || (position == (self.position.0, self.position.1 + 1)
+                        && possible_directions.iter().any(|x| x.0 == Direction::East))
+                    || (position == (self.position.0, self.position.1 - 1)
+                        && possible_directions.iter().any(|x| x.0 == Direction::West))
                 {
                     Some(node)
                 } else {
