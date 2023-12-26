@@ -8,22 +8,9 @@ enum Direction {
     East = 0b1000,
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-enum PipeType {
-    Vertical,
-    Horizontal,
-    NorthEast,
-    NorthWest,
-    SouthWest,
-    SouthEast,
-    StartingPosition,
-    Ground,
-}
-
 #[derive(Debug, Clone)]
 struct Node {
     position: (i32, i32),
-    pipe_type: PipeType,
     outer_direction: Vec<Direction>,
     inner_direction: Vec<Direction>,
     next: Option<Box<Node>>,
@@ -35,9 +22,6 @@ impl Node {
             outer_direction: vec![],
             inner_direction: vec![],
             next: None,
-            pipe_type: PipeType::Ground,
-            // next_direction: Direction::None,
-            // previous_direction: Direction::None,
             position: (0, 0),
         }
     }
@@ -91,7 +75,13 @@ impl Node {
     }
 
     fn is_start(&self) -> bool {
-        self.pipe_type == PipeType::StartingPosition
+        self.inner_direction
+            == vec![
+                Direction::North,
+                Direction::South,
+                Direction::West,
+                Direction::East,
+            ]
     }
 
     fn get_directions(&self) -> Vec<Direction> {
@@ -120,7 +110,7 @@ fn parse(input: &str) -> Vec<Vec<Node>> {
         let mut nodes_row: Vec<Node> = vec![];
         for (c, col) in row.chars().enumerate() {
             let mut node = Node::new();
-            let (direction, pip_type) = parse_direction(col);
+            let direction = parse_direction(col);
             node.inner_direction = direction;
             node.position = (r as i32, c as i32);
             if r > 0 {
@@ -135,7 +125,6 @@ fn parse(input: &str) -> Vec<Vec<Node>> {
             if c < col_len - 1 {
                 node.outer_direction.push(Direction::East);
             }
-            node.pipe_type = pip_type;
             nodes_row.push(node);
         }
         nodes.push(nodes_row);
@@ -143,24 +132,20 @@ fn parse(input: &str) -> Vec<Vec<Node>> {
     nodes
 }
 
-fn parse_direction(c: char) -> (Vec<Direction>, PipeType) {
+fn parse_direction(c: char) -> Vec<Direction> {
     match c {
-        '|' => (vec![Direction::North, Direction::South], PipeType::Vertical),
-        '-' => (vec![Direction::West, Direction::East], PipeType::Horizontal),
-        'L' => (vec![Direction::North, Direction::East], PipeType::NorthEast),
-        'J' => (vec![Direction::North, Direction::West], PipeType::NorthWest),
-        '7' => (vec![Direction::South, Direction::West], PipeType::SouthWest),
-        'F' => (vec![Direction::South, Direction::East], PipeType::SouthEast),
-        '.' => (vec![], PipeType::Ground),
-        'S' => (
-            vec![
-                Direction::North,
-                Direction::South,
-                Direction::West,
-                Direction::East,
-            ],
-            PipeType::StartingPosition,
-        ),
+        '|' => vec![Direction::North, Direction::South],
+        '-' => vec![Direction::West, Direction::East],
+        'L' => vec![Direction::North, Direction::East],
+        'J' => vec![Direction::North, Direction::West],
+        '7' => vec![Direction::South, Direction::West],
+        'F' => vec![Direction::South, Direction::East],
+        'S' => vec![
+            Direction::North,
+            Direction::South,
+            Direction::West,
+            Direction::East,
+        ],
         _ => panic!("wrong char."),
     }
 }
