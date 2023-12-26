@@ -75,13 +75,7 @@ impl Node {
     }
 
     fn is_start(&self) -> bool {
-        self.inner_direction
-            == vec![
-                Direction::North,
-                Direction::South,
-                Direction::West,
-                Direction::East,
-            ]
+        self.inner_direction.len() == 4
     }
 
     fn get_directions(&self) -> Vec<Direction> {
@@ -146,7 +140,8 @@ fn parse_direction(c: char) -> Vec<Direction> {
             Direction::West,
             Direction::East,
         ],
-        _ => panic!("wrong char."),
+        '.' => vec![],
+        last => panic!("wrong char:{}", last),
     }
 }
 
@@ -214,17 +209,12 @@ pub fn part_two(input: &str) -> Option<u32> {
         .filter(|x| is_point_in_polygon(*x, &nodes_in_graph[..]))
         .collect();
 
-    // println!("{:?}", result);
-
     Some(result.len() as u32)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_parse() {}
 
     #[test]
     fn test_move() {
