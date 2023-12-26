@@ -235,10 +235,7 @@ pub fn part_two(input: &str) -> Option<u32> {
         .filter(|x| is_point_in_polygon(*x, &nodes_in_graph[..]))
         .collect();
 
-    println!("{:?}", result);
-    // nodes.iter().for_each(|x| {
-    //     println!("{:?},{:?}", x.position, x.pipe_type);
-    // });
+    // println!("{:?}", result);
 
     Some(result.len() as u32)
 }
