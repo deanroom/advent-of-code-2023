@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 advent_of_code::solution!(11);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -6,10 +8,42 @@ enum Symbol {
     Star,
 }
 
+#[derive(Default, Debug)]
+struct Star {
+    x: i64,
+    y: i64,
+    e_x: i64,
+    e_y: i64,
+}
+
+impl Clone for Star {
+    fn clone(&self) -> Self {
+        Self {
+            x: self.x,
+            y: self.y,
+            e_x: self.e_x,
+            e_y: self.e_y,
+        }
+    }
+
+    fn clone_from(&mut self, source: &Self) {
+        *self = source.clone()
+    }
+}
+impl Star {
+    fn new(x: i64, y: i64) -> Star {
+        Star {
+            x,
+            y,
+            e_x: x,
+            e_y: y,
+        }
+    }
+}
+
 fn parse(input: &str) -> Vec<Vec<Symbol>> {
     let output = input
         .lines()
-        .into_iter()
         .map(|line| {
             line.chars()
                 .map(|c| match c {
@@ -23,158 +57,107 @@ fn parse(input: &str) -> Vec<Vec<Symbol>> {
     output
 }
 
-fn expand(input: Vec<Vec<Symbol>>) -> Vec<Vec<Symbol>> {
-    let mut ouput: Vec<Vec<Symbol>> = vec![];
+fn expand(input: Vec<Star>, expansion: i64) -> Vec<Star> {
+    let expansion = expansion - 1;
+    let mut universe_original: Vec<Star> = input;
 
+    universe_original.sort_unstable_by_key(|x| x.x);
+    let mut universe_expanded: Vec<Star> = universe_original.clone();
+
+    let axis_x: Vec<i64> = universe_original
+        .iter()
+        .unique_by(|x| x.x)
+        .map(|x| x.x)
+        .collect();
+
+    let mut axis_prev = 0;
     //expand row
-    for line in input {
-        if !line.iter().any(|x| x == &Symbol::Star) {
-            ouput.push(line.clone());
+    for value in axis_x.iter() {
+        let mut distance = value - axis_prev;
+        if distance >= 1 {
+            distance = (distance - 1) * expansion;
         }
-        ouput.push(line);
-    }
-
-    //rotate row and column
-    let num_rows = ouput.len();
-    let num_cols = ouput[0].len();
-
-    let mut matrix: Vec<Vec<Symbol>> = vec![vec![Symbol::Space; num_rows]; num_cols];
-
-    for i in 0..num_rows {
-        for j in 0..num_cols {
-            matrix[j][i] = ouput[i][j];
+        axis_prev = *value;
+        for x in universe_expanded.iter_mut().filter(|x| x.x >= *value) {
+            x.e_x = x.e_x + distance;
         }
     }
-    let mut ouput: Vec<Vec<Symbol>> = vec![];
+    universe_original.sort_unstable_by_key(|x| x.y);
+    universe_expanded.sort_unstable_by_key(|x| x.y);
 
-    //expand column by expand row.
-    for line in matrix {
-        if !line.iter().any(|x| x == &Symbol::Star) {
-            ouput.push(line.clone());
+    let axis_y: Vec<i64> = universe_original
+        .iter()
+        .unique_by(|x| x.y)
+        .map(|x| x.y)
+        .collect();
+    let mut axis_prev = 0;
+    //expand row
+    for value in axis_y.iter() {
+        let mut distance = value - axis_prev;
+        if distance >= 1 {
+            distance = (distance - 1) * expansion;
         }
-        ouput.push(line);
-    }
-
-    //rotate back again to keep data clear.
-    let num_rows = ouput.len();
-    let num_cols = ouput[0].len();
-
-    let mut matrix: Vec<Vec<Symbol>> = vec![vec![Symbol::Space; num_rows]; num_cols];
-
-    for i in 0..num_rows {
-        for j in 0..num_cols {
-            matrix[j][i] = ouput[i][j];
+        axis_prev = *value;
+        for x in universe_expanded.iter_mut().filter(|x| x.y >= *value) {
+            x.e_y = x.e_y + distance;
         }
     }
 
-    matrix
+    universe_expanded
 }
 
-fn expand_part2(input: Vec<Vec<Symbol>>, expansion: u32) -> Vec<Vec<Symbol>> {
-    let mut ouput: Vec<Vec<Symbol>> = vec![];
-
-    println!("expand row");
-    //expand row
-    for line in input {
-        if !line.iter().any(|x| x == &Symbol::Star) {
-            for _ in 0..expansion-1 {
-                ouput.push(line.clone());
-            }
-        }
-        ouput.push(line);
-    }
-
-    println!("rotate row");
-    //rotate row and column
-    let num_rows = ouput.len();
-    let num_cols = ouput[0].len();
-
-    let mut matrix: Vec<Vec<Symbol>> = vec![vec![Symbol::Space; num_rows]; num_cols];
-
-    for i in 0..num_rows {
-        for j in 0..num_cols {
-            matrix[j][i] = ouput[i][j];
-        }
-    }
-    let mut ouput: Vec<Vec<Symbol>> = vec![];
-
-    println!("expand column");
-    //expand column by expand row.
-    for line in matrix {
-        if !line.iter().any(|x| x == &Symbol::Star) {
-            for _ in 0..expansion-1 {
-                ouput.push(line.clone());
-            }
-        }
-        ouput.push(line);
-    }
-
-    println!("rotate column");
-    //rotate back again to keep data clear.
-    let num_rows = ouput.len();
-    let num_cols = ouput[0].len();
-
-    let mut matrix: Vec<Vec<Symbol>> = vec![vec![Symbol::Space; num_rows]; num_cols];
-
-    for i in 0..num_rows {
-        for j in 0..num_cols {
-            matrix[j][i] = ouput[i][j];
-        }
-    }
-
-    matrix
-}
-
-fn find_stars(input: Vec<Vec<Symbol>>) -> Vec<(i32, i32)> {
-    println!("find_stars");
-    let mut output: Vec<(i32, i32)> = vec![];
+fn find_stars(input: Vec<Vec<Symbol>>) -> Vec<Star> {
+    let mut output: Vec<Star> = vec![];
     for i in 0..input.len() {
         for j in 0..input[0].len() {
             if input[i][j] == Symbol::Star {
-                output.push((i as i32, j as i32));
+                output.push(Star::new(j as i64, i as i64));
             }
         }
     }
     output
 }
 
-fn get_pairs(input: Vec<(i32, i32)>) -> Vec<((i32, i32), (i32, i32))> {
-    println!("get_pairs");
-    let mut output: Vec<((i32, i32), (i32, i32))> = vec![];
-    for ele_i in input.iter() {
-        for ele_j in input.iter() {
-            if ele_i != ele_j {
-                if !output.contains(&(*ele_j, *ele_i)) {
-                    output.push((ele_i.clone(), (*ele_j).clone()));
-                }
-            }
-        }
+fn get_pairs(input: Vec<Star>) -> Vec<(Star, Star)> {
+    let mut output: Vec<(Star, Star)> = vec![];
+
+    for i in 1..input.len() {
+        let mut pair: Vec<(Star, Star)> = input
+            .iter()
+            .zip(&input[i..])
+            .map(|x| (x.0.clone(), x.1.clone()))
+            .collect();
+        output.append(&mut pair)
     }
     output
 }
 
-pub fn part_one(input: &str) -> Option<i32> {
+pub fn part_one(input: &str) -> Option<i64> {
     let input = parse(input);
-    let input = expand(input);
     let input = find_stars(input);
+    let input = expand(input, 2);
     let input = get_pairs(input);
 
-    let result: i32 = input
+    let result: i64 = input
         .iter()
-        .map(|point| (point.0 .0 - point.1 .0).abs() + (point.0 .1 - point.1 .1).abs())
+        .map(|point| (point.0.e_x - point.1.e_x).abs() + (point.0.e_y - point.1.e_y).abs())
         .sum();
     Some(result)
 }
 
-pub fn part_two(input: &str) -> Option<i32> {
+pub fn part_two(input: &str) -> Option<i64> {
+    part_two_with_parmeter(input, 1000000)
+}
+
+pub fn part_two_with_parmeter(input: &str, expansion: i64) -> Option<i64> {
     let input = parse(input);
-    let input = expand_part2(input, 1000000);
     let input = find_stars(input);
+    let input = expand(input, expansion);
     let input = get_pairs(input);
 
-    let result: i32 = input
+    let result: i64 = input
         .iter()
-        .map(|point| (point.0 .0 - point.1 .0).abs() + (point.0 .1 - point.1 .1).abs())
+        .map(|point| (point.0.e_x - point.1.e_x).abs() + (point.0.e_y - point.1.e_y).abs())
         .sum();
     Some(result)
 }
@@ -182,6 +165,7 @@ pub fn part_two(input: &str) -> Option<i32> {
 #[cfg(test)]
 
 mod tests {
+
     use super::*;
 
     #[test]
@@ -189,7 +173,6 @@ mod tests {
         let result = &advent_of_code::template::read_file("examples", DAY);
 
         let output = parse(result);
-        let _ = expand(output);
     }
     #[test]
     fn test_part_one() {
@@ -199,16 +182,9 @@ mod tests {
 
     #[test]
     fn test_part_two() {
-        let input = &advent_of_code::template::read_file("examples", DAY);
-        let input = parse(input);
-        let input = expand_part2(input, 10);
-        let input = find_stars(input);
-        let input = get_pairs(input);
+        let result =
+            part_two_with_parmeter(&advent_of_code::template::read_file("examples", DAY), 10);
 
-        let result: i32 = input
-            .iter()
-            .map(|point| (point.0 .0 - point.1 .0).abs() + (point.0 .1 - point.1 .1).abs())
-            .sum();
-        assert_eq!(result, 1030);
+        assert_eq!(result, Some(1030));
     }
 }
