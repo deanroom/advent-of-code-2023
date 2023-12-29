@@ -79,7 +79,7 @@ fn expand(input: Vec<Star>, expansion: i64) -> Vec<Star> {
         }
         axis_prev = *value;
         for x in universe_expanded.iter_mut().filter(|x| x.x >= *value) {
-            x.e_x = x.e_x + distance;
+            x.e_x += distance;
         }
     }
     universe_original.sort_unstable_by_key(|x| x.y);
@@ -91,7 +91,7 @@ fn expand(input: Vec<Star>, expansion: i64) -> Vec<Star> {
         .map(|x| x.y)
         .collect();
     let mut axis_prev = 0;
-    //expand row
+    //expand col
     for value in axis_y.iter() {
         let mut distance = value - axis_prev;
         if distance >= 1 {
@@ -99,7 +99,7 @@ fn expand(input: Vec<Star>, expansion: i64) -> Vec<Star> {
         }
         axis_prev = *value;
         for x in universe_expanded.iter_mut().filter(|x| x.y >= *value) {
-            x.e_y = x.e_y + distance;
+            x.e_y += distance;
         }
     }
 
