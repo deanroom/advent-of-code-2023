@@ -42,7 +42,7 @@ impl Springs {
 }
 
 fn composite(springs: &[Status], path: &mut Vec<Status>, output: &mut Vec<Vec<Status>>) {
-    if springs.len() == 0 {
+    if springs.is_empty() {
         return;
     }
     springs[0].guess_status().iter().for_each(|x| {
