@@ -82,7 +82,7 @@ fn eat_damage(it: &mut Iter<'_, Status>) -> u32 {
     result
 }
 
-fn parse(input: &str) -> Vec<Springs> {
+fn parse(input: &str, size: u32) -> Vec<Springs> {
     input
         .lines()
         .map(|line| {
@@ -91,7 +91,7 @@ fn parse(input: &str) -> Vec<Springs> {
                 panic!("parsed failed.");
             }
 
-            Springs {
+            let mut result = Springs {
                 springs: splitted_strings[0]
                     .chars()
                     .map(|c| match c {
@@ -110,19 +110,39 @@ fn parse(input: &str) -> Vec<Springs> {
                             .expect("group number should be parsed successfully.")
                     })
                     .collect(),
+            };
+            if size > 1 {
+                let mut springs = vec![];
+                let mut groups = vec![];
+
+                springs.append(&mut result.springs.clone());
+                groups.append(&mut result.groups.clone());
+
+                for _ in 1..size {
+                    springs.push(Status::Unknown);
+                    springs.append(&mut result.springs.clone());
+
+                    groups.append(&mut result.groups.clone());
+                }
+                result.springs = springs;
+                result.groups = groups;
             }
+
+            result
         })
         .collect()
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let output = parse(input);
+    let output = parse(input, 1);
+    println!("parsed.{:?}", output);
     let output = output.iter().fold(0, |acc, x| acc + x.get_matched());
     Some(output)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let output = parse(input);
+    let output = parse(input, 3);
+    println!("parsed.{:?}", output);
     let output = output.iter().fold(0, |acc, x| acc + x.get_matched());
     Some(output)
 }
@@ -132,6 +152,13 @@ mod tests {
     use std::vec;
 
     use super::*;
+
+    #[test]
+    fn test_loop() {
+        for i in 1..2 {
+            println!("{}", i);
+        }
+    }
 
     #[test]
     fn test_convert_group() {
@@ -174,6 +201,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(525152));
     }
 }
