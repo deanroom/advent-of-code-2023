@@ -1,4 +1,6 @@
-use std::slice::Iter;
+use std::{convert, slice::Iter};
+
+use itertools::Itertools;
 
 advent_of_code::solution!(12);
 
@@ -32,10 +34,32 @@ impl Springs {
         output
     }
     fn get_matched(&self) -> u32 {
-        let result = self
-            .get_composites()
+        let result = self.get_composites();
+
+        let result = result
             .iter()
-            .filter(|x| convert_to_group(x) == self.groups[..])
+            .filter_map(|x| {
+                // let groups: Vec<u32> = x
+                //     .iter()
+                //     .group_by(|x| **x == Status::Damaged)
+                //     .into_iter()
+                //     .filter_map(|(key, group)| {
+                //         if key {
+                //             let count = group.count() as u32;
+                //             return Some(count);
+                //         }
+                //         None
+                //     })
+                //     .collect();
+                let groups = convert_to_group(x);
+                if groups.len() == self.groups.len() {
+                    Some(groups)
+                } else {
+                    None
+                }
+            })
+            .filter(|x| x.len() == self.groups.len())
+            .filter(|x: &Vec<u32>| *x == self.groups[..])
             .count() as u32;
         result
     }
@@ -67,6 +91,7 @@ fn convert_to_group(springs: &[Status]) -> Vec<u32> {
         damaged += eat_damage(&mut it);
         result.push(damaged);
     }
+    // println!("create new group:{}/{:?}", total, result);
     result
 }
 fn eat_damage(it: &mut Iter<'_, Status>) -> u32 {
@@ -82,7 +107,7 @@ fn eat_damage(it: &mut Iter<'_, Status>) -> u32 {
     result
 }
 
-fn parse(input: &str, size: u32) -> Vec<Springs> {
+fn parse(input: &str) -> Vec<Springs> {
     input
         .lines()
         .map(|line| {
@@ -91,7 +116,7 @@ fn parse(input: &str, size: u32) -> Vec<Springs> {
                 panic!("parsed failed.");
             }
 
-            let mut result = Springs {
+            Springs {
                 springs: splitted_strings[0]
                     .chars()
                     .map(|c| match c {
@@ -110,39 +135,19 @@ fn parse(input: &str, size: u32) -> Vec<Springs> {
                             .expect("group number should be parsed successfully.")
                     })
                     .collect(),
-            };
-            if size > 1 {
-                let mut springs = vec![];
-                let mut groups = vec![];
-
-                springs.append(&mut result.springs.clone());
-                groups.append(&mut result.groups.clone());
-
-                for _ in 1..size {
-                    springs.push(Status::Unknown);
-                    springs.append(&mut result.springs.clone());
-
-                    groups.append(&mut result.groups.clone());
-                }
-                result.springs = springs;
-                result.groups = groups;
             }
-
-            result
         })
         .collect()
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let output = parse(input, 1);
-    println!("parsed.{:?}", output);
+    let output = parse(input);
     let output = output.iter().fold(0, |acc, x| acc + x.get_matched());
     Some(output)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let output = parse(input, 3);
-    println!("parsed.{:?}", output);
+    let output = parse(input);
     let output = output.iter().fold(0, |acc, x| acc + x.get_matched());
     Some(output)
 }
@@ -155,7 +160,7 @@ mod tests {
 
     #[test]
     fn test_loop() {
-        for i in 1..2 {
+        for i in 1..5 {
             println!("{}", i);
         }
     }
