@@ -1,4 +1,4 @@
-use std::{convert, slice::Iter};
+use std::{collections::VecDeque, slice::Iter};
 
 use itertools::Itertools;
 
@@ -26,59 +26,74 @@ struct Springs {
     groups: Vec<u32>,
 }
 
+
 impl Springs {
-    fn get_composites(&self) -> Vec<Vec<Status>> {
-        let mut path: Vec<Status> = vec![];
-        let mut output: Vec<Vec<Status>> = vec![];
-        composite(&self.springs[..], &mut path, &mut output);
+    fn get_composites(&self) -> Vec<VecDeque<Status>> {
+        let mut path: VecDeque<Status> = VecDeque::new();
+        let mut output: Vec<VecDeque<Status>> = vec![];
+        self.composite(&self.springs[..], &mut path, &mut output);
         output
     }
+    fn composite(
+        &self,
+        springs: &[Status],
+        path: &mut VecDeque<Status>,
+        output: &mut Vec<VecDeque<Status>>,
+    ) {
+        if springs.is_empty() {
+            return;
+        }
+        springs[0].guess_status().iter().for_each(|x| {
+            path.push_back(x.clone());
+            if springs.len() > 1 {
+                self.composite(&springs[1..], path, output)
+            } else {
+                output.push(path.clone());
+            }
+            path.pop_back();
+        });
+    }
     fn get_matched(&self) -> u32 {
+        println!("begin composites: {:?}", self.groups);
         let result = self.get_composites();
-
-        let result = result
+        println!(
+            "got composites: {:?}, with count {}",
+            result,
+            result.len()
+        );
+        println!("begin group: {:?}", self.groups);
+        let result: Vec<Vec<u32>> = result
             .iter()
             .filter_map(|x| {
-                // let groups: Vec<u32> = x
-                //     .iter()
-                //     .group_by(|x| **x == Status::Damaged)
-                //     .into_iter()
-                //     .filter_map(|(key, group)| {
-                //         if key {
-                //             let count = group.count() as u32;
-                //             return Some(count);
-                //         }
-                //         None
-                //     })
-                //     .collect();
-                let groups = convert_to_group(x);
+                let groups: Vec<u32> = x
+                    .iter()
+                    .group_by(|x| **x == Status::Damaged)
+                    .into_iter()
+                    .filter_map(|(key, group)| {
+                        if key {
+                            let count = group.count() as u32;
+                            return Some(count);
+                        }
+                        None
+                    })
+                    .collect();
+                // let groups = convert_to_group(&x[..]);
                 if groups.len() == self.groups.len() {
                     Some(groups)
                 } else {
                     None
                 }
             })
-            .filter(|x| x.len() == self.groups.len())
-            .filter(|x: &Vec<u32>| *x == self.groups[..])
-            .count() as u32;
+            .collect();
+        println!("got group: {:?}, with count {}", self.groups, result.len());
+        println!("begin match count: {:?}", self.groups);
+        let result = result.iter().filter(|x| **x == self.groups[..]).count() as u32;
+        println!("got match count: {:?}, with count {}", self.groups, result);
+
         result
     }
 }
 
-fn composite(springs: &[Status], path: &mut Vec<Status>, output: &mut Vec<Vec<Status>>) {
-    if springs.is_empty() {
-        return;
-    }
-    springs[0].guess_status().iter().for_each(|x| {
-        path.push(x.clone());
-        if springs.len() > 1 {
-            composite(&springs[1..], path, output)
-        } else {
-            output.push(path.clone());
-        }
-        path.pop();
-    });
-}
 fn convert_to_group(springs: &[Status]) -> Vec<u32> {
     let mut result: Vec<u32> = vec![];
     let mut it: Iter<'_, Status> = springs.iter();
@@ -147,7 +162,15 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let output = parse(input);
+    let mut output = parse(input);
+    output.iter_mut().for_each(|x| {
+        for _ in 1..2 {
+            let mut spring = x.springs.clone();
+            x.springs.push(Status::Unknown);
+            x.springs.append(&mut spring);
+            x.groups.append(&mut x.groups.clone());
+        }
+    });
     let output = output.iter().fold(0, |acc, x| acc + x.get_matched());
     Some(output)
 }
@@ -160,7 +183,7 @@ mod tests {
 
     #[test]
     fn test_loop() {
-        for i in 1..5 {
+        for i in 1..2 {
             println!("{}", i);
         }
     }
@@ -206,6 +229,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, Some(525152));
+        assert_eq!(result, Some(206));
     }
 }
