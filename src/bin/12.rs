@@ -24,10 +24,44 @@ impl Status {
 struct Springs {
     springs: Vec<Status>,
     groups: Vec<u32>,
+    group_count: u32,
 }
 
-
 impl Springs {
+    fn get_matched(&self) -> u32 {
+        println!("begin composites: {:?}", self.groups);
+        let result = self.get_composites();
+        println!("got composites: with count {}", result.len());
+        println!("begin group: {:?}", self.groups);
+        let result: Vec<Vec<u32>> = result
+            .iter()
+            .filter_map(|x| {
+                let groups: Vec<u32> = x
+                    .iter()
+                    .group_by(|x| **x == Status::Damaged)
+                    .into_iter()
+                    .filter_map(|(key, group)| {
+                        if key {
+                            let count = group.count() as u32;
+                            return Some(count);
+                        }
+                        None
+                    })
+                    .collect();
+                if groups.len() == self.groups.len() {
+                    Some(groups)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        println!("got group: {:?}, with count {}", self.groups, result.len());
+        println!("begin match count: {:?}", self.groups);
+        let result = result.iter().filter(|x| **x == self.groups[..]).count() as u32;
+        println!("got match count: {:?}, with count {}", self.groups, result);
+
+        result
+    }
     fn get_composites(&self) -> Vec<VecDeque<Status>> {
         let mut path: VecDeque<Status> = VecDeque::new();
         let mut output: Vec<VecDeque<Status>> = vec![];
@@ -48,49 +82,18 @@ impl Springs {
             if springs.len() > 1 {
                 self.composite(&springs[1..], path, output)
             } else {
-                output.push(path.clone());
+                // println!(
+                //     "{}/{}",
+                //     path.iter().filter(|x| **x == Status::Damaged).count(),
+                //     self.groups.iter().sum::<u32>()
+                // );
+                if path.iter().filter(|x| **x == Status::Damaged).count() as u32 == self.group_count
+                {
+                    output.push(path.clone());
+                }
             }
             path.pop_back();
         });
-    }
-    fn get_matched(&self) -> u32 {
-        println!("begin composites: {:?}", self.groups);
-        let result = self.get_composites();
-        println!(
-            "got composites: {:?}, with count {}",
-            result,
-            result.len()
-        );
-        println!("begin group: {:?}", self.groups);
-        let result: Vec<Vec<u32>> = result
-            .iter()
-            .filter_map(|x| {
-                let groups: Vec<u32> = x
-                    .iter()
-                    .group_by(|x| **x == Status::Damaged)
-                    .into_iter()
-                    .filter_map(|(key, group)| {
-                        if key {
-                            let count = group.count() as u32;
-                            return Some(count);
-                        }
-                        None
-                    })
-                    .collect();
-                // let groups = convert_to_group(&x[..]);
-                if groups.len() == self.groups.len() {
-                    Some(groups)
-                } else {
-                    None
-                }
-            })
-            .collect();
-        println!("got group: {:?}, with count {}", self.groups, result.len());
-        println!("begin match count: {:?}", self.groups);
-        let result = result.iter().filter(|x| **x == self.groups[..]).count() as u32;
-        println!("got match count: {:?}, with count {}", self.groups, result);
-
-        result
     }
 }
 
@@ -130,7 +133,16 @@ fn parse(input: &str) -> Vec<Springs> {
             if splitted_strings.len() != 2 {
                 panic!("parsed failed.");
             }
-
+            let groups: Vec<u32> = splitted_strings[1]
+                .split(',')
+                .collect::<Vec<&str>>()
+                .iter()
+                .map(|x| {
+                    x.parse()
+                        .expect("group number should be parsed successfully.")
+                })
+                .collect();
+            let groups_count = groups.iter().sum::<u32>();
             Springs {
                 springs: splitted_strings[0]
                     .chars()
@@ -141,15 +153,8 @@ fn parse(input: &str) -> Vec<Springs> {
                         _ => panic!("parse failed,char {}", c),
                     })
                     .collect(),
-                groups: splitted_strings[1]
-                    .split(',')
-                    .collect::<Vec<&str>>()
-                    .iter()
-                    .map(|x| {
-                        x.parse()
-                            .expect("group number should be parsed successfully.")
-                    })
-                    .collect(),
+                groups: groups,
+                group_count: groups_count,
             }
         })
         .collect()
@@ -164,11 +169,12 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let mut output = parse(input);
     output.iter_mut().for_each(|x| {
-        for _ in 1..2 {
+        for _ in 1..3 {
             let mut spring = x.springs.clone();
             x.springs.push(Status::Unknown);
             x.springs.append(&mut spring);
             x.groups.append(&mut x.groups.clone());
+            x.group_count = x.groups.iter().sum();
         }
     });
     let output = output.iter().fold(0, |acc, x| acc + x.get_matched());
@@ -209,6 +215,7 @@ mod tests {
         let springs = Springs {
             springs: vec![Status::Operational, Status::Unknown],
             groups: vec![],
+            group_count: 0,
         };
         let result = springs.get_composites();
         assert_eq!(
