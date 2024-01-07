@@ -80,17 +80,13 @@ impl Springs {
         springs[0].guess_status().iter().for_each(|x| {
             path.push_back(x.clone());
             if springs.len() > 1 {
+                let damaged_count = path.iter().filter(|x| **x == Status::Damaged).count() as u32;
+                if damaged_count > self.group_count {
+                    return;
+                }
                 self.composite(&springs[1..], path, output)
             } else {
-                // println!(
-                //     "{}/{}",
-                //     path.iter().filter(|x| **x == Status::Damaged).count(),
-                //     self.groups.iter().sum::<u32>()
-                // );
-                if path.iter().filter(|x| **x == Status::Damaged).count() as u32 == self.group_count
-                {
-                    output.push(path.clone());
-                }
+                output.push(path.clone());
             }
             path.pop_back();
         });
@@ -142,7 +138,6 @@ fn parse(input: &str) -> Vec<Springs> {
                         .expect("group number should be parsed successfully.")
                 })
                 .collect();
-            let groups_count = groups.iter().sum::<u32>();
             Springs {
                 springs: splitted_strings[0]
                     .chars()
@@ -154,7 +149,7 @@ fn parse(input: &str) -> Vec<Springs> {
                     })
                     .collect(),
                 groups: groups,
-                group_count: groups_count,
+                group_count: 0,
             }
         })
         .collect()
@@ -169,11 +164,13 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let mut output = parse(input);
     output.iter_mut().for_each(|x| {
-        for _ in 1..3 {
-            let mut spring = x.springs.clone();
+        let mut spring = x.springs.clone();
+        let mut groups = x.groups.clone();
+
+        for _ in 1..5 {
             x.springs.push(Status::Unknown);
-            x.springs.append(&mut spring);
-            x.groups.append(&mut x.groups.clone());
+            x.springs.append(&mut spring.clone());
+            x.groups.append(&mut groups.clone());
             x.group_count = x.groups.iter().sum();
         }
     });
@@ -186,13 +183,6 @@ mod tests {
     use std::vec;
 
     use super::*;
-
-    #[test]
-    fn test_loop() {
-        for i in 1..2 {
-            println!("{}", i);
-        }
-    }
 
     #[test]
     fn test_convert_group() {
