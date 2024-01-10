@@ -1,10 +1,10 @@
-use std::{collections::VecDeque, slice::Iter};
-
 use itertools::Itertools;
+use rayon::prelude::*;
+use std::{collections::VecDeque, slice::Iter, time::Instant};
 
 advent_of_code::solution!(12);
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone,Copy)]
 enum Status {
     Unknown = 0,
     Operational = 1,
@@ -29,25 +29,17 @@ struct Springs {
 
 impl Springs {
     fn get_matched(&self) -> u32 {
-        println!("begin composites: {:?}", self.groups);
+        let now = Instant::now();
         let result = self.get_composites();
-        println!("got composites: with count {}", result.len());
-        println!("begin group: {:?}", self.groups);
+        println!(
+            "got composites: {:?},with count {}",
+            now.elapsed().as_millis(),
+            result.len()
+        );
         let result: Vec<Vec<u32>> = result
             .iter()
             .filter_map(|x| {
-                let groups: Vec<u32> = x
-                    .iter()
-                    .group_by(|x| **x == Status::Damaged)
-                    .into_iter()
-                    .filter_map(|(key, group)| {
-                        if key {
-                            let count = group.count() as u32;
-                            return Some(count);
-                        }
-                        None
-                    })
-                    .collect();
+                let groups = convert_to_group(x);
                 if groups.len() == self.groups.len() {
                     Some(groups)
                 } else {
@@ -55,45 +47,81 @@ impl Springs {
                 }
             })
             .collect();
-        println!("got group: {:?}, with count {}", self.groups, result.len());
-        println!("begin match count: {:?}", self.groups);
+        println!(
+            "got group: {:?}, with count {}",
+            now.elapsed().as_millis(),
+            result.len()
+        );
         let result = result.iter().filter(|x| **x == self.groups[..]).count() as u32;
-        println!("got match count: {:?}, with count {}", self.groups, result);
+        println!(
+            "got match count: {:?}, with count {}",
+            now.elapsed().as_millis(),
+            result
+        );
 
         result
     }
-    fn get_composites(&self) -> Vec<VecDeque<Status>> {
-        let mut path: VecDeque<Status> = VecDeque::new();
-        let mut output: Vec<VecDeque<Status>> = vec![];
+    fn get_composites(&self) -> Vec<Vec<Status>> {
+        let mut path: Vec<Status> = Vec::new();
+        let mut output: Vec<Vec<Status>> = vec![];
         self.composite(&self.springs[..], &mut path, &mut output);
         output
     }
-    fn composite(
-        &self,
-        springs: &[Status],
-        path: &mut VecDeque<Status>,
-        output: &mut Vec<VecDeque<Status>>,
-    ) {
+    fn composite(&self, springs: &[Status], path: &mut Vec<Status>, output: &mut Vec<Vec<Status>>) {
         if springs.is_empty() {
             return;
         }
         springs[0].guess_status().iter().for_each(|x| {
-            path.push_back(x.clone());
+            path.push(x);
+            let tmp_group = convert_to_group(&path[..]);
+
+            // println!(
+            //     "tmp_groups: {:?}, slice: {:?}",
+            //     tmp_group,
+            //     &self.groups[0..tmp_group.len()]
+            // );
             if springs.len() > 1 {
-                let damaged_count = path.iter().filter(|x| **x == Status::Damaged).count() as u32;
-                if damaged_count > self.group_count {
-                    return;
+                if self.compare_group(&tmp_group) {
+                    self.composite(&springs[1..], path, output)
                 }
-                self.composite(&springs[1..], path, output)
             } else {
                 output.push(path.clone());
             }
-            path.pop_back();
+
+            path.pop();
         });
+    }
+    fn compare_group(&self, other_group: &[u32]) -> bool {
+        if other_group.len() > self.groups.len() {
+            return false;
+        }
+
+        if self.groups.len() > 1 && other_group.len() > 1 {
+            if self.groups[0..other_group.len() - 1] == other_group[..other_group.len() - 1] {
+                true
+            } else {
+                false
+            }
+        } else {
+            true
+        }
     }
 }
 
 fn convert_to_group(springs: &[Status]) -> Vec<u32> {
+    // let groups: Vec<u32> = springs
+    //     .iter()
+    //     .group_by(|x| **x == Status::Damaged)
+    //     .into_iter()
+    //     .filter_map(|(key, group)| {
+    //         if key {
+    //             let count = group.count() as u32;
+    //             return Some(count);
+    //         }
+    //         None
+    //     })
+    //     .collect();
+    // groups
     let mut result: Vec<u32> = vec![];
     let mut it: Iter<'_, Status> = springs.iter();
     while let Some(status) = it.next() {
@@ -164,8 +192,8 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let mut output = parse(input);
     output.iter_mut().for_each(|x| {
-        let mut spring = x.springs.clone();
-        let mut groups = x.groups.clone();
+        let spring = x.springs.clone();
+        let groups = x.groups.clone();
 
         for _ in 1..5 {
             x.springs.push(Status::Unknown);
@@ -226,6 +254,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, Some(206));
+        assert_eq!(result, Some(525152));
     }
 }
