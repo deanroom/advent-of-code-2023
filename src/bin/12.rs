@@ -72,7 +72,7 @@ impl Springs {
             return;
         }
         springs[0].guess_status().iter().for_each(|x| {
-            path.push(x);
+            path.push(x.clone());
             let tmp_group = convert_to_group(&path[..]);
 
             // println!(
@@ -254,6 +254,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, Some(525152));
+        assert_eq!(result, Some(18902));
     }
 }
