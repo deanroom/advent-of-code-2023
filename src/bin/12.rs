@@ -1,4 +1,6 @@
-use std::{collections::btree_map::Range, slice::Iter, time::Instant};
+use std::{borrow::Borrow, convert, slice::Iter};
+
+use itertools::Itertools;
 
 advent_of_code::solution!(12);
 
@@ -11,73 +13,89 @@ struct Springs {
 
 impl Springs {
     fn get_composites(&self) -> u32 {
-        let mut path = Vec::new();
-        let mut output: u32 = 0;
-        self.composite(&self.springs[..], &mut path, &mut output);
-        output
-    }
-    fn composite(&self, springs: &[i8], path: &mut Vec<i8>, output: &mut u32) {
-        if springs.is_empty() {
-            return;
-        }
-        let range = match springs[0] {
-            0 => 0..1,
-            1 => 1..2,
-            -1 => 0..2,
-            _ => panic!("wrong number."),
-        };
-
-        for x in range {
-            path.push(x);
-            let tmp_group = convert_to_group(&path[..]);
-
-            if springs.len() > 1 {
-                if self.compare_group(&tmp_group) {
-                    self.composite(&springs[1..], path, output)
+        // 我们通过以下方式寻找所有的组合-路径：
+        // 0，定义每一个可以表示【好】、【坏】、【好或者坏】的所有元素构成一个数组，每种取值为一个状态，每个元素可以有一种或者两种状态，
+        // 1. 对于每一个元素，其自身最多有两种状态，通过选择所有元素的第一个状态，可以建立一条路径
+        // 3. 从这个数组末尾开始，如果其是一种状态，那么我们最开始建立的路径就已经覆盖，我们可以处理倒数第二个元素；
+        //   如果这个元素是两种状态，那么我们就需要使用第一个路径当前元素之前元素构成路径+当前元素的第二种状态作为第二条路径.
+        // . 这样我们就有了第二条路径
+        // 4. 接下来我们处理倒数第二个元素，我们仍然是根据其有两种还是一种状态来处理，如果是一种状态，我们之前谈到的第一条路径和第二条路径其实已经包含了
+        //  如果两种状态，那么我们就用当前状态加上前面两条路径分别作为新的两条路径。
+        // 5. 继续以上第四步，依次类推，最终直到处理完第一个元素后，我们就完成了所有路径。
+        let full_path: Vec<Vec<i8>> = self
+            .springs
+            .iter()
+            .map(|x| {
+                match x {
+                    0 => 0..1,
+                    1 => 1..2,
+                    -1 => 0..2,
+                    _ => panic!("wrong number."),
                 }
-            } else {
-                println!("{}==={}", tmp_group.len(), path.len());
-                if self.groups.len() == tmp_group.len() {
-                    if self.groups == tmp_group {
-                        *output += 1;
-                        // println!("{}", output);
+                .collect()
+            })
+            .collect();
+
+        let path: Vec<&i8> = full_path
+            .iter()
+            .map(|x| x.first().expect("number"))
+            .collect_vec();
+
+        let mut stack_path: Vec<Vec<&i8>> = vec![];
+        stack_path.push(path);
+        let mut loop_index = full_path.len() - 1;
+        loop {
+            if full_path[loop_index].len() == 1 {
+                if loop_index == 0 {
+                    break;
+                }
+                loop_index -= 1;
+                continue;
+            }
+            let previous_stack = stack_path.iter();
+            let mut new_path: Vec<&i8>;
+            let mut new_stack = vec![];
+            for path in previous_stack {
+                new_path = vec![];
+                for (index, node) in path.iter().enumerate() {
+                    if index == loop_index {
+                        new_path.push(&1)
+                    } else {
+                        new_path.push(&node);
                     }
                 }
+                new_stack.push(new_path)
             }
+            println!(
+                "Path Loop Index: {:?}/{},with stack count: {}",
+                loop_index,
+                full_path.len(),
+                new_stack.len()
+            );
+            stack_path.append(&mut new_stack);
 
-            path.pop();
+            if loop_index == 0 {
+                break;
+            }
+            loop_index -= 1;
         }
-    }
-    fn compare_group(&self, other_group: &[u32]) -> bool {
-        if other_group.len() > self.groups.len() {
-            return false;
-        }
-
-        if self.groups.len() > 1 && other_group.len() > 1 {
-            if other_group.iter().max() > self.groups.iter().max() {
-                return false;
-            }
-
-            if other_group.iter().sum::<u32>() > self.groups.iter().sum() {
-                return false;
-            }
-
-            if self.groups[0..other_group.len() - 1] == other_group[..other_group.len() - 1] {
-                true
-            } else {
-                false
-            }
-        } else {
-            true
-        }
+        let result = stack_path
+            .iter()
+            .filter(|x| convert_to_group(&x) == self.groups)
+            .count();
+        // stack_path
+        //     .iter()
+        //     .enumerate()
+        //     .for_each(|x| println!("composite: {:?}, group: {:?}", x, convert_to_group(x.1)));
+        result as u32
     }
 }
 
-fn convert_to_group(springs: &[i8]) -> Vec<u32> {
+fn convert_to_group(springs: &[&i8]) -> Vec<u32> {
     let mut result: Vec<u32> = vec![];
-    let mut it: Iter<'_, i8> = springs.iter();
+    let mut it: Iter<'_, &i8> = springs.iter();
     while let Some(status) = it.next() {
-        if *status != 1 {
+        if **status != 1 {
             continue;
         }
 
@@ -87,10 +105,10 @@ fn convert_to_group(springs: &[i8]) -> Vec<u32> {
     }
     result
 }
-fn eat_damage(it: &mut Iter<'_, i8>) -> u32 {
+fn eat_damage(it: &mut Iter<'_, &i8>) -> u32 {
     let mut result = 0;
     if let Some(status) = it.next() {
-        if *status == 1 {
+        if **status == 1 {
             result = 1;
             result += eat_damage(it);
         } else {
@@ -154,7 +172,10 @@ pub fn part_two(input: &str) -> Option<u32> {
         }
     });
 
-    let output = output.iter().fold(0, |acc, x| acc + x.get_composites());
+    let output = output
+        .iter()
+        .enumerate()
+        .fold(0, |acc, x| acc + x.1.get_composites());
     Some(output)
 }
 
@@ -163,39 +184,12 @@ mod tests {
     use std::vec;
 
     use super::*;
-
-    // #[test]
-    // fn test_convert_group() {
-    //     let result = convert_to_group(
-    //         &vec![
-    //             Status::Damaged,
-    //             Status::Operational,
-    //             Status::Damaged,
-    //             Status::Operational,
-    //             Status::Damaged,
-    //             Status::Damaged,
-    //             Status::Damaged,
-    //         ][..],
-    //     );
-    //     assert_eq!(result, vec![1, 1, 3]);
-    // }
     #[test]
-    fn test_range() {
-        for i in 0..1 {
-            println!("{}", i);
-        }
-        println!("end");
-
-        for i in 1..2 {
-            println!("{}", i);
-        }
-        println!("end");
-
-        for i in 0..2 {
-            println!("{}", i);
-        }
-        println!("end");
+    fn test_part_simple() {
+        let result = part_one("?#? 1,1");
     }
+
+    use super::*;
     #[test]
     fn test_part_one() {
         let result = part_one(&advent_of_code::template::read_file("examples", DAY));
