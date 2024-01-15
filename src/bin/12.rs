@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, convert, slice::Iter};
+use std::{borrow::Borrow, convert, slice::Iter, collections::VecDeque};
 
 use itertools::Itertools;
 
@@ -22,7 +22,7 @@ impl Springs {
         // 4. 接下来我们处理倒数第二个元素，我们仍然是根据其有两种还是一种状态来处理，如果是一种状态，我们之前谈到的第一条路径和第二条路径其实已经包含了
         //  如果两种状态，那么我们就用当前状态加上前面两条路径分别作为新的两条路径。
         // 5. 继续以上第四步，依次类推，最终直到处理完第一个元素后，我们就完成了所有路径。
-        let full_path: Vec<Vec<i8>> = self
+        let full_path: Vec<Vec<u8>> = self
             .springs
             .iter()
             .map(|x| {
@@ -35,14 +35,15 @@ impl Springs {
                 .collect()
             })
             .collect();
-
-        let path: Vec<&i8> = full_path
+        let path = full_path
             .iter()
-            .map(|x| x.first().expect("number"))
-            .collect_vec();
+            .map(|x| x.first().expect("number").to_string())
+            .collect::<String>();
+        let path = u128::from_str_radix(&path,2).expect("msg");
+            
 
-        let mut stack_path: Vec<Vec<&i8>> = vec![];
-        stack_path.push(path);
+        let mut stack_path: VecDeque<u128> =VecDeque::new();
+        stack_path.push_back(path);
         let mut loop_index = full_path.len() - 1;
         loop {
             if full_path[loop_index].len() == 1 {
@@ -53,18 +54,19 @@ impl Springs {
                 continue;
             }
             let previous_stack = stack_path.iter();
-            let mut new_path: Vec<&i8>;
-            let mut new_stack = vec![];
+            let mut new_path: u128;
+            let mut new_stack = VecDeque::new();;
             for path in previous_stack {
-                new_path = vec![];
-                for (index, node) in path.iter().enumerate() {
-                    if index == loop_index {
-                        new_path.push(&1)
-                    } else {
-                        new_path.push(&node);
-                    }
-                }
-                new_stack.push(new_path)
+                // new_path = vec![];
+                // for (index, node) in path.iter().enumerate() {
+                //     if index == loop_index {
+                //         new_path.push(&1)
+                //     } else {
+                //         new_path.push(&node);
+                //     }
+                // }
+                new_path = *path;
+                new_stack.push_back(new_path)
             }
             println!(
                 "Path Loop Index: {:?}/{},with stack count: {}",
@@ -79,15 +81,15 @@ impl Springs {
             }
             loop_index -= 1;
         }
-        let result = stack_path
-            .iter()
-            .filter(|x| convert_to_group(&x) == self.groups)
-            .count();
+        // let result = stack_path
+        //     .iter()
+        //     .filter(|x| convert_to_group(&x) == self.groups)
+        //     .count();
         // stack_path
         //     .iter()
         //     .enumerate()
         //     .for_each(|x| println!("composite: {:?}, group: {:?}", x, convert_to_group(x.1)));
-        result as u32
+        0
     }
 }
 
