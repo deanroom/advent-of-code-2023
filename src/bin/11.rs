@@ -172,7 +172,7 @@ mod tests {
     fn test_parse() {
         let result = &advent_of_code::template::read_file("examples", DAY);
 
-        let output = parse(result);
+        let _output = parse(result);
     }
     #[test]
     fn test_part_one() {

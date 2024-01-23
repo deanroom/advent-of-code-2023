@@ -31,8 +31,8 @@ impl Springs {
 #[cached]
 fn get_matched(num: Vec<Vec<u8>>, group: Vec<u32>, num_group: u32) -> u64 {
     let mut num_matched = 0;
-    if num.len() == 0 {
-        if group.len() == 0 && num_group == 0 {
+    if num.is_empty() {
+        if group.is_empty() && num_group == 0 {
             return 1;
         } else {
             return 0;
@@ -41,14 +41,12 @@ fn get_matched(num: Vec<Vec<u8>>, group: Vec<u32>, num_group: u32) -> u64 {
     for ele in &num[0] {
         if *ele == 1 {
             num_matched += get_matched(num[1..].to_vec(), group[..].to_vec(), num_group + 1)
-        } else {
-            if num_group > 0 {
-                if group.len() > 0 && group[0] == num_group {
-                    num_matched += get_matched(num[1..].to_vec(), group[1..].to_vec(), 0)
-                }
-            } else {
-                num_matched += get_matched(num[1..].to_vec(), group[..].to_vec(), 0)
+        } else if num_group > 0 {
+            if !group.is_empty() && group[0] == num_group {
+                num_matched += get_matched(num[1..].to_vec(), group[1..].to_vec(), 0)
             }
+        } else {
+            num_matched += get_matched(num[1..].to_vec(), group[..].to_vec(), 0)
         }
     }
     num_matched
@@ -81,7 +79,7 @@ fn parse(input: &str) -> Vec<Springs> {
                         _ => panic!("parse failed,char {}", c),
                     })
                     .collect(),
-                groups: groups,
+                groups,
             }
         })
         .collect()
@@ -125,7 +123,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_part_simple() {
-        let result = part_one("?#? 1,1");
+        let _result = part_one("?#? 1,1");
     }
 
     #[test]
