@@ -104,15 +104,14 @@ pub fn part_two(input: &str) -> Option<u64> {
         }
     });
     let output = output.iter().enumerate().fold(0, |acc, x| {
-        let start = Instant::now();
-
+        // let start = Instant::now();
         let result = acc + x.1.get_composites();
-        println!(
-            "Process {}/{},cost time: {:?}",
-            x.0,
-            output.len(),
-            start.elapsed()
-        );
+        // println!(
+        //     "Process {}/{},cost time: {:?}",
+        //     x.0,
+        //     output.len(),
+        //     start.elapsed()
+        // );
         result
     });
     Some(output)
