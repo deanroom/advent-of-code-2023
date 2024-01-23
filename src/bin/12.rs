@@ -102,8 +102,8 @@ pub fn part_two(input: &str) -> Option<u64> {
         }
     });
     let output = output.iter().enumerate().fold(0, |acc, x| {
-        let result = acc + x.1.get_composites();
-        result
+        
+        acc + x.1.get_composites()
     });
     Some(output)
 }
