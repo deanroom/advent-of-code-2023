@@ -1,30 +1,16 @@
-use itertools::Itertools;
 use num_complex::Complex;
-use std::clone;
-use std::collections::{BTreeMap, HashMap, HashSet};
-use std::fs::File;
-use std::path::Path;
-use std::time::Instant;
+use std::collections::HashSet;
+type Position = HashSet<Complex<i32>>;
 
 advent_of_code::solution!(14);
 
-fn tilt(
-    rounds: &HashSet<Complex<i32>>,
-    d: Complex<i32>,
-    board: &HashSet<Complex<i32>>,
-    blocked: &HashSet<Complex<i32>>,
-) -> HashSet<Complex<i32>> {
+fn tilt(rounds: &Position, d: Complex<i32>, board: &Position, blocked: &Position) -> Position {
     let mut rounds = rounds.clone();
     loop {
         let free: HashSet<_> = board
             .difference(&rounds)
             .collect::<HashSet<&Complex<i32>>>()
-            .difference(
-                &blocked
-                    .iter()
-                    .map(|x| x)
-                    .collect::<HashSet<&Complex<i32>>>(),
-            )
+            .difference(&blocked.iter().collect::<HashSet<&Complex<i32>>>())
             .cloned()
             .collect();
 
@@ -39,15 +25,11 @@ fn tilt(
     }
 }
 
-fn load(rounds: &HashSet<Complex<i32>>) -> i32 {
+fn load(rounds: &Position) -> i32 {
     rounds.iter().map(|z| 100 - z.re).sum()
 }
 
-fn cycle(
-    rounds: &HashSet<Complex<i32>>,
-    board: &HashSet<Complex<i32>>,
-    blocked: &HashSet<Complex<i32>>,
-) -> HashSet<Complex<i32>> {
+fn cycle(rounds: &Position, board: &Position, blocked: &Position) -> Position {
     let directions = [
         Complex::new(1, 0),
         Complex::new(0, 1),
@@ -61,13 +43,7 @@ fn cycle(
     rounds
 }
 
-fn parse(
-    input: &str,
-) -> (
-    HashSet<Complex<i32>>,
-    HashSet<Complex<i32>>,
-    HashSet<Complex<i32>>,
-) {
+fn parse(input: &str) -> (Position, Position, Position) {
     let mut board = HashSet::new();
     let mut blocked = HashSet::new();
     let mut rounds = HashSet::new();
@@ -111,8 +87,7 @@ pub fn part_two(input: &str) -> Option<u32> {
         rounds = cycle(&rounds, &board, &blocked);
         if let Some(start) = seen.iter().position(|x| *x == rounds) {
             return Some(load(
-                &seen[(python_modulus(1_000_000_000 - i as i32, start as i32 - i as i32) + i as i32
-                    - 1) as usize],
+                &seen[(python_modulus(1_000_000_000 - i, start as i32 - i) + i - 1) as usize],
             ) as u32);
         }
         seen.push(rounds.clone());
