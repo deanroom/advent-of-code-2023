@@ -13,6 +13,7 @@ dependencies = [
  "ndarray",
  "nom",
  "nom-supreme",
+ "num-complex",
  "pico-args",
  "rayon",
 ]
