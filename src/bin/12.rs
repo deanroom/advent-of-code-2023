@@ -101,10 +101,10 @@ pub fn part_two(input: &str) -> Option<u64> {
             x.groups.append(&mut groups.clone());
         }
     });
-    let output = output.iter().enumerate().fold(0, |acc, x| {
-        
-        acc + x.1.get_composites()
-    });
+    let output = output
+        .iter()
+        .enumerate()
+        .fold(0, |acc, x| acc + x.1.get_composites());
     Some(output)
 }
 
