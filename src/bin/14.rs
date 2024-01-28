@@ -71,13 +71,6 @@ pub fn part_one(input: &str) -> Option<u32> {
     let result: i32 = load(&tilt(&rounds, Complex::new(1, 0), &board, &blocked));
     Some(result as u32)
 }
-fn python_modulus(dividend: i32, divisor: i32) -> i32 {
-    let mut result = dividend % divisor;
-    if divisor < 0 && result > 0 {
-        result -= divisor.abs();
-    }
-    result
-}
 
 pub fn part_two(input: &str) -> Option<u32> {
     let mut seen = vec![];
@@ -86,9 +79,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     for i in 0.. {
         rounds = cycle(&rounds, &board, &blocked);
         if let Some(start) = seen.iter().position(|x| *x == rounds) {
-            return Some(load(
-                &seen[(python_modulus(1_000_000_000 - i, start as i32 - i) + i - 1) as usize],
-            ) as u32);
+            return Some(load(&seen[start + (1_000_000_000 - i) % (i - start) - 1]) as u32);
         }
         seen.push(rounds.clone());
     }
@@ -101,8 +92,7 @@ mod tests {
 
     #[test]
     fn test_num() {
-        let number = python_modulus(51, -25);
-        println!("{}", number);
+        println!("{} {} {} {}", 19 % 26, -19 % 26, 19 % -26, -19 % -26);
     }
 
     #[test]
