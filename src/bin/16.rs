@@ -1,7 +1,7 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashSet};
 
-use itertools::{Itertools, Position};
-use linked_hash_map::{Entry, LinkedHashMap};
+use itertools::{Itertools};
+use linked_hash_map::{LinkedHashMap};
 use num_complex::Complex;
 advent_of_code::solution!(16);
 
@@ -143,7 +143,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     let mut seen: HashSet<(Complex<i32>, Complex<i32>)> = HashSet::new();
     input.lines().enumerate().for_each(|(i, line)| {
         line.chars().enumerate().for_each(|(j, c)| {
-            map.insert(Complex::new(j as i32, -1 * i as i32), c);
+            map.insert(Complex::new(j as i32, -(i as i32)), c);
         })
     });
     let start_position = Complex::new(0, 0);
@@ -156,7 +156,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     let mut map: LinkedHashMap<Complex<i32>, char> = LinkedHashMap::new();
     input.lines().enumerate().for_each(|(i, line)| {
         line.chars().enumerate().for_each(|(j, c)| {
-            map.insert(Complex::new(j as i32, -1 * i as i32), c);
+            map.insert(Complex::new(j as i32, -(i as i32)), c);
         })
     });
     let height = input.lines().count() as i32;
@@ -181,7 +181,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     });
 
     map.keys()
-        .filter(|x| x.im == -1 * height + 1)
+        .filter(|x| x.im == -height + 1)
         .for_each(|k| {
             start_positions.insert((k, Complex::new(0, 1)));
         });
