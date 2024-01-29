@@ -1,7 +1,7 @@
-use std::collections::{HashSet};
+use std::collections::HashSet;
 
-use itertools::{Itertools};
-use linked_hash_map::{LinkedHashMap};
+use itertools::Itertools;
+use linked_hash_map::LinkedHashMap;
 use num_complex::Complex;
 advent_of_code::solution!(16);
 
