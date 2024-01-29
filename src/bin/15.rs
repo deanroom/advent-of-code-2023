@@ -27,20 +27,17 @@ pub fn part_two(input: &str) -> Option<u32> {
                 .remove(key);
         }
         None => {
-            let lens = x.split('=').collect_vec();
-            match lens.len() == 2 {
-                true => {
-                    let key = lens[0];
-                    let value = lens[1].parse::<u32>().unwrap();
-                    map.entry(hash(key) + 1)
-                        .or_insert(Box::new(LinkedHashMap::new()))
-                        .entry(key)
-                        .and_modify(|x: &mut u32| *x = value)
-                        .or_insert(value);
-                }
-                false => {
-                    panic!("Invalid input: |{}|",x);
-                }
+            let lens = x.splitn(2, '=').collect_vec();
+            if lens.len() == 2 {
+                let key: &str = lens[0];
+                let value = lens[1].parse::<u32>().unwrap();
+                map.entry(hash(key) + 1)
+                    .or_insert_with(|| Box::new(LinkedHashMap::new()))
+                    .entry(key)
+                    .and_modify(|x: &mut u32| *x = value)
+                    .or_insert(value);
+            } else {
+                panic!("Invalid input: |{}|", x);
             }
         }
     });
