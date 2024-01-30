@@ -25,10 +25,6 @@ fn tilt(rounds: &Position, d: Complex<i32>, board: &Position, blocked: &Position
     }
 }
 
-fn load(rounds: &Position) -> i32 {
-    rounds.iter().map(|z| 100 - z.re).sum()
-}
-
 fn cycle(rounds: &Position, board: &Position, blocked: &Position) -> Position {
     let directions = [
         Complex::new(1, 0),
@@ -67,19 +63,29 @@ fn parse(input: &str) -> (Position, Position, Position) {
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
+    let height = input.lines().count() as i32;
     let (board, blocked, rounds) = parse(input);
-    let result: i32 = load(&tilt(&rounds, Complex::new(1, 0), &board, &blocked));
+    let result: i32 = tilt(&rounds, Complex::new(1, 0), &board, &blocked)
+        .iter()
+        .map(|z| height - z.re)
+        .sum();
     Some(result as u32)
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let mut seen = vec![];
+    let mut seen: Vec<Position> = vec![];
+    let height = input.lines().count() as i32;
     let (board, blocked, rounds) = parse(input);
-    let mut rounds = rounds;
+    let mut rounds: HashSet<Complex<i32>> = rounds;
     for i in 0.. {
         rounds = cycle(&rounds, &board, &blocked);
         if let Some(start) = seen.iter().position(|x| *x == rounds) {
-            return Some(load(&seen[start + (1_000_000_000 - i) % (i - start) - 1]) as u32);
+            let result: i32 = seen[start + (1_000_000_000 - i) % (i - start) - 1]
+                .iter()
+                .map(|z| height - z.re)
+                .sum();
+
+            return Some(result as u32);
         }
         seen.push(rounds.clone());
     }
@@ -101,5 +107,4 @@ mod tests {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
         assert_eq!(result, Some(64));
     }
-
 }
