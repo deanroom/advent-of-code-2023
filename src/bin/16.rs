@@ -10,6 +10,7 @@ fn get_next_positions(
 ) -> Vec<(Complex<i32>, Complex<i32>)> {
     let (pos, dir, c) = position;
     let mut positions = vec![];
+    //todo 此处代码可以使用复数相乘旋转优化重复代码
 
     if dir == Complex::new(0, 1) {
         match c {
@@ -180,11 +181,9 @@ pub fn part_two(input: &str) -> Option<u32> {
         start_positions.insert((k, Complex::new(0, -1)));
     });
 
-    map.keys()
-        .filter(|x| x.im == -height + 1)
-        .for_each(|k| {
-            start_positions.insert((k, Complex::new(0, 1)));
-        });
+    map.keys().filter(|x| x.im == -height + 1).for_each(|k| {
+        start_positions.insert((k, Complex::new(0, 1)));
+    });
     let output = start_positions
         .iter()
         .map(|(&pos, dir)| {
