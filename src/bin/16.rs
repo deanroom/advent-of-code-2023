@@ -10,113 +10,33 @@ fn get_next_positions(
 ) -> Vec<(Complex<i32>, Complex<i32>)> {
     let (pos, dir, c) = position;
     let mut positions = vec![];
-    //todo 此处代码可以使用复数相乘旋转优化重复代码
-
-    if dir == Complex::new(0, 1) {
-        match c {
-            '|' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
+    let mut dirs = vec![dir];
+    match c {
+        '|' => {
+            if dir.re != 0 {
+                dirs = vec![Complex::new(0, 1), Complex::new(0, -1)];
             }
-            '-' => {
-                let new_dir = Complex::new(-1, 0);
-                positions.push((pos + new_dir, new_dir));
-                let new_dir: Complex<i32> = Complex::new(1, 0);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '/' => {
-                let new_dir: Complex<i32> = Complex::new(1, 0);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '\\' => {
-                let new_dir: Complex<i32> = Complex::new(-1, 0);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '.' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
-            }
-            _ => panic!("Invalid char"),
         }
-    } else if dir == Complex::new(0, -1) {
-        match c {
-            '|' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
+        '-' => {
+            if dir.im != 0 {
+                dirs = vec![Complex::new(1, 0), Complex::new(-1, 0)];
             }
-            '-' => {
-                let new_dir = Complex::new(-1, 0);
-                positions.push((pos + new_dir, new_dir));
-                let new_dir: Complex<i32> = Complex::new(1, 0);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '/' => {
-                let new_dir: Complex<i32> = Complex::new(-1, 0);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '\\' => {
-                let new_dir: Complex<i32> = Complex::new(1, 0);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '.' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
-            }
-            _ => panic!("Invalid char"),
         }
-    } else if dir == Complex::new(1, 0) {
-        match c {
-            '|' => {
-                let new_dir = Complex::new(0, 1);
-                positions.push((pos + new_dir, new_dir));
-                let new_dir: Complex<i32> = Complex::new(0, -1);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '-' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
-            }
-            '/' => {
-                let new_dir: Complex<i32> = Complex::new(0, 1);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '\\' => {
-                let new_dir: Complex<i32> = Complex::new(0, -1);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '.' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
-            }
-            _ => panic!("Invalid char"),
+        '/' => {
+            dirs = vec![(dir * Complex::new(0, 1)).conj()];
         }
-    } else if dir == Complex::new(-1, 0) {
-        match c {
-            '|' => {
-                let new_dir = Complex::new(0, 1);
-                positions.push((pos + new_dir, new_dir));
-                let new_dir: Complex<i32> = Complex::new(0, -1);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '-' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
-            }
-            '/' => {
-                let new_dir: Complex<i32> = Complex::new(0, -1);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '\\' => {
-                let new_dir: Complex<i32> = Complex::new(0, 1);
-                positions.push((pos + new_dir, new_dir));
-            }
-            '.' => {
-                let new_dir = dir;
-                positions.push((pos + new_dir, new_dir));
-            }
-            _ => panic!("Invalid char"),
+        '\\' => {
+            dirs = vec![(dir * Complex::new(0, -1)).conj()];
+        }
+        _ => {
+            dirs = vec![dir];
         }
     }
+
+    dirs.iter().for_each(|&d| {
+        positions.push((pos + d, d));
+    });
+
     positions
 }
 
@@ -142,22 +62,28 @@ fn get_positions(
 pub fn part_one(input: &str) -> Option<u32> {
     let mut map: LinkedHashMap<Complex<i32>, char> = LinkedHashMap::new();
     let mut seen: HashSet<(Complex<i32>, Complex<i32>)> = HashSet::new();
-    input.lines().enumerate().for_each(|(i, line)| {
-        line.chars().enumerate().for_each(|(j, c)| {
-            map.insert(Complex::new(j as i32, -(i as i32)), c);
+    input.lines().enumerate().for_each(|(row, line)| {
+        line.chars().enumerate().for_each(|(col, c)| {
+            map.insert(Complex::new(col as i32, row as i32), c);
         })
     });
     let start_position = Complex::new(0, 0);
     let start_dir = Complex::new(1, 0);
     get_positions((start_position, start_dir), &map, &mut seen);
-    Some(seen.iter().map(|x| x.0).unique().count() as u32)
+
+    Some(
+        seen.iter()
+            .map(|x: &(Complex<i32>, Complex<i32>)| x.0)
+            .unique()
+            .count() as u32,
+    )
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
     let mut map: LinkedHashMap<Complex<i32>, char> = LinkedHashMap::new();
-    input.lines().enumerate().for_each(|(i, line)| {
-        line.chars().enumerate().for_each(|(j, c)| {
-            map.insert(Complex::new(j as i32, -(i as i32)), c);
+    input.lines().enumerate().for_each(|(row, line)| {
+        line.chars().enumerate().for_each(|(col, c)| {
+            map.insert(Complex::new(col as i32, row as i32), c);
         })
     });
     let height = input.lines().count() as i32;
@@ -169,20 +95,16 @@ pub fn part_two(input: &str) -> Option<u32> {
         start_positions.insert((k, Complex::new(1, 0)));
     });
 
-    map.keys().filter(|x| x.re == 0).for_each(|k| {
-        start_positions.insert((k, Complex::new(1, 0)));
-    });
-
     map.keys().filter(|x| x.re == width - 1).for_each(|k| {
         start_positions.insert((k, Complex::new(-1, 0)));
     });
 
     map.keys().filter(|x| x.im == 0).for_each(|k| {
-        start_positions.insert((k, Complex::new(0, -1)));
+        start_positions.insert((k, Complex::new(0, 1)));
     });
 
-    map.keys().filter(|x| x.im == -height + 1).for_each(|k| {
-        start_positions.insert((k, Complex::new(0, 1)));
+    map.keys().filter(|x| x.im == height - 1).for_each(|k| {
+        start_positions.insert((k, Complex::new(0, -1)));
     });
     let output = start_positions
         .iter()
