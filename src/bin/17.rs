@@ -31,8 +31,8 @@ pub fn part_one(input: &str) -> Option<u32> {
         .map(|line| {
             line.chars()
                 .map(|n| {
-                    let output = n.to_digit(10).unwrap();
-                    output
+                    
+                    n.to_digit(10).unwrap()
                 })
                 .collect::<Vec<_>>()
         })
@@ -120,8 +120,8 @@ pub fn part_two(input: &str) -> Option<u32> {
         .map(|line| {
             line.chars()
                 .map(|n| {
-                    let output = n.to_digit(10).unwrap();
-                    output
+                    
+                    n.to_digit(10).unwrap()
                 })
                 .collect::<Vec<_>>()
         })
