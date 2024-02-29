@@ -129,7 +129,6 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     let rows = matrix.len();
     let cols = matrix[0].len();
-    // let mut dist = vec![vec![std::u32::MAX; cols]; rows];
     let mut best: HashMap<((usize, usize), (i32, i32), u32), u32> = HashMap::new();
 
     // 使用时，如果键不存在，返回无穷大
