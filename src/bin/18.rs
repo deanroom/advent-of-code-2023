@@ -4,6 +4,25 @@ use num_complex::Complex;
 
 advent_of_code::solution!(18);
 
+fn solve_2(instructions: &[(String, f64)], dirs: &HashMap<String, Complex<f64>>) -> f64 {
+    let mut vs: Vec<Complex<f64>> = Vec::new();
+    for (dir, dist) in instructions {
+        let v = dirs.get(dir).unwrap() * dist;
+        vs.push(v);
+    }
+
+    let mut sum_r: f64 = 0.0;
+    let mut sum_i: f64 = 0.0;
+    for v in &mut vs {
+        sum_r += v.re;
+        v.re = sum_r;
+        sum_i += v.im;
+        v.im = sum_i;
+    }
+
+    0.0
+}
+
 fn solve(instructions: &[(String, f64)], dirs: &HashMap<String, Complex<f64>>) -> f64 {
     let mut vs: Vec<Complex<f64>> = Vec::new();
     for (dir, dist) in instructions {
@@ -18,7 +37,15 @@ fn solve(instructions: &[(String, f64)], dirs: &HashMap<String, Complex<f64>>) -
         vertical_distance += sum_r * v.im;
     }
 
-    let horizontal_distance = vs.iter().map(|v| v.norm()).sum::<f64>() / 2.0 + 1.0;
+    let horizontal_distance = vs
+        .iter()
+        .map(|v: &Complex<f64>| {
+            println!("{}", v.norm().to_string());
+            v.norm()
+        })
+        .sum::<f64>()
+        / 2.0
+        + 1.0;
 
     println!(
         "Vertical distance: {},Horizontal distance: {}",
